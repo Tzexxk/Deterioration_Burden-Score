@@ -49,7 +49,10 @@ def portable(value):
         for item in value:
             portable(item)
     elif isinstance(value, str):
-        absolute = re.search(r"(?<![A-Za-z0-9/:])(?:[A-Za-z]:[\\/]|\\\\[^\\\s]+\\|/(?!/)[A-Za-z0-9_.-]+)", value)
+        # Percent/slash is also used inside compound medication names.
+        absolute = re.search(
+            r"(?<![A-Za-z0-9/:])(?:[A-Za-z]:[\\/]|\\\\[^\\\s]+\\)"
+            r"|(?<![A-Za-z0-9/:%])/(?!/)[A-Za-z0-9_.-]+", value)
         require(not absolute and not value.startswith(("/", "\\")),
                 "ABSOLUTE_PATH_FORBIDDEN", "Serialized values must use portable paths")
     return value

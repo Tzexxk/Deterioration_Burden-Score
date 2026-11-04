@@ -1,0 +1,56 @@
+{
+  "sample_unit": "study",
+  "admission_matching": {
+    "admissions_path": "hosp/admissions.csv"
+  },
+  "review_policy": "lenient",
+  "burden_v2": {
+    "outcome_version": "burden_v2",
+    "audit_horizons_hours": [
+      72
+    ],
+    "minimum_age": 18,
+    "rules_version": "user_rules",
+    "dictionary_version": "user_dictionary",
+    "dictionary_handling_reviews": {},
+    "careunits": {},
+    "transfer_event_actions": {},
+    "medications": {},
+    "administration_types": {},
+    "medication_event_actions": {},
+    "procedure_status_actions": {},
+    "iv_routes": {},
+    "spo2_units": {},
+    "spo2_threshold": 85,
+    "items": {
+      "225792": {
+        "label": "Invasive Ventilation",
+        "linksto": "procedureevents",
+        "confirmed": false
+      },
+      "225794": {
+        "label": "Non-invasive Ventilation",
+        "linksto": "procedureevents",
+        "confirmed": false
+      },
+      "220277": {
+        "label": "O2 saturation pulseoxymetry",
+        "linksto": "chartevents",
+        "confirmed": false
+      }
+    },
+    "overrides_path": "configs/data/v1_r1/cohort/reviews/event_evidence.csv",
+    "candidate_medication_identity_policy": {
+      "confirmed": false,
+      "action": "exclude"
+    },
+    "candidate_conflict_policies": {},
+    "pharmacy_identity_lookup": {
+      "confirmed": false
+    },
+    "prescriptions_identity_lookup": {
+      "confirmed": false
+    },
+    "candidate_exclusions_path": "configs/data/v1_r1/cohort/reviews/candidate_exclusions.csv"
+  }
+}

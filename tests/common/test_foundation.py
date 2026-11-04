@@ -19,6 +19,15 @@ from src.common.paths import Layout, PipelineError, portable
 
 
 class FoundationTests(unittest.TestCase):
+    def test_compound_medication_names_do_not_mask_absolute_paths(self):
+        value = {"medication": "compound 2%/ingredient 0.5%"}
+        self.assertEqual(portable(value), value)
+        self.assertEqual(portable(json.dumps(value)), json.dumps(value))
+        outside = chr(47) + "outside/file"
+        for unsafe in (outside, "File " + outside, "prefix%" + chr(67) + chr(58) + outside):
+            with self.assertRaises(PipelineError):
+                portable(unsafe)
+
     def test_windows_rename_denial_retries_then_succeeds(self):
         busy = PermissionError("synthetic sharing denial")
         busy.winerror = 5

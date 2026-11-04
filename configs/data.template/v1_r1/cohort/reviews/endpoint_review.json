@@ -1,0 +1,14 @@
+{
+  "confirmed": false,
+  "version": 1,
+  "run": 1,
+  "audit_generation": null,
+  "review_policy": "lenient",
+  "horizon_hours": 72,
+  "decision_version": "endpoint_review",
+  "reviewer": "",
+  "reviewed_on": "",
+  "rationale": "",
+  "rules_version": "user_rules",
+  "review_records": []
+}

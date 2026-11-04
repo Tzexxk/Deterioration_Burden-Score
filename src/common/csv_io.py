@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import csv
+import io
 from pathlib import Path
 from typing import Any
 
@@ -148,3 +149,37 @@ def _csv_reader(stream: Any, check: dict | None = None) -> _CsvDictReader:
     return _CsvDictReader(
         stream, check if check is not None else _check_csv_tail(Path(stream.name))
     )
+
+
+def _validate_csv_rejects(path: Path, check: dict, rejects: list[tuple]) -> None:
+    """Validate DuckDB rejects against the raw EOF suffix before publishing rows."""
+    display = check['file']
+    records = {(position, raw) for position, raw in rejects}
+    if not records:
+        if check['status'] != 'incomplete':
+            _tail_result(check, 'complete', check['expected_fields'], '')
+        return
+    if len(records) != 1:
+        raise ValueError(f'Multiple malformed CSV records in {display}; refusing to skip')
+    position, reported = records.pop()
+    with path.open('rb') as stream:
+        stream.seek(max(0, position - 1))
+        suffix = stream.read(max(CSV_TAIL_BYTES, len(reported.encode('utf-8')) * 2 + 8))
+        if stream.tell() != check['size_bytes']:
+            raise ValueError(f'Malformed CSV record is not at EOF in {display}')
+    raw = suffix.decode('utf-8').strip('\r\n')
+    reported = reported.strip('\r\n')
+    alternatives = {reported, reported.replace('\\r', '\r').replace('\\n', '\n')}
+    if raw not in alternatives:
+        raise ValueError(f'Malformed CSV record is not the final record in {display}')
+    try:
+        rows = list(csv.reader(io.StringIO(raw, newline=''), strict=True))
+        if len(rows) != 1 or len(rows[0]) >= check['expected_fields']:
+            raise ValueError(f'Final CSV error is not an incomplete record in {display}')
+        actual, reason = (len(rows[0]), 'missing_final_fields')
+    except csv.Error as error:
+        if str(error) != 'unexpected end of data':
+            raise ValueError(f'Unsupported final CSV error in {display}') from error
+        actual, reason = ('', 'unterminated_quoted_record')
+    check['skipped_rows'] = 1
+    _tail_result(check, 'incomplete', actual, reason)
