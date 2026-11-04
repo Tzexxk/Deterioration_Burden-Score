@@ -16,6 +16,28 @@ from tests.common import test_foundation as foundation
 
 
 class SplitPublicationTests(unittest.TestCase):
+    def test_variable_data_directory_routes_files_and_replaces_old_inventory(self):
+        for generation, names in [(1, ("first.npy", "second.npy")), (2, ("third.npy",))]:
+            with self.store.publish("step02", "build", data_files=("table.bin",), data_directories=("images",)) as work:
+                (work / "table.bin").write_bytes(b"table")
+                (work / "images/nested").mkdir(parents=True)
+                for name in names:
+                    (work / "images/nested" / name).write_bytes(b"pixels")
+                (work / "previews").mkdir()
+                (work / "previews/image.png").write_bytes(b"preview")
+            manifest = self.store.validate(self.ref)
+            self.assertEqual(manifest["generation"], generation)
+            self.assertEqual({p.name for p in (self.data / "images/nested").iterdir()}, set(names))
+            self.assertEqual(self.store.output_ref(manifest, "previews/image.png")["root"], "outputs")
+            self.assertTrue(all(self.store.output_ref(manifest, "images/nested/" + name)["root"] == "processed" for name in names))
+
+    def test_missing_variable_directory_does_not_publish_partial_data(self):
+        with self.assertRaises(PipelineError):
+            with self.store.publish("step02", "build", data_files=("table.bin",), data_directories=("images",)) as work:
+                (work / "table.bin").write_bytes(b"table")
+        self.assertFalse(self.data.exists())
+        self.assertFalse(self.reports.exists())
+
     def setUp(self):
         self.fixture = foundation.FoundationTests()
         self.fixture.setUp()

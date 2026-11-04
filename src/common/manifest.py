@@ -239,14 +239,17 @@ class ManifestStore:
     @contextmanager
     def publish(self, stage, phase, *, inputs=(), configs=(), area=None,
                 destination=None, action="generated", origin=None, details=None, required_bytes=0,
-                data_files=()):
+                data_files=(), data_directories=()):
         ref = self.manifest_ref(stage, phase, area=area, destination=destination)
         dest = self.layout.resolve(ref).parent
         state_path = self.control / f"{stage}.{phase}.state.json"
         data_files = tuple(relative(name) for name in data_files)
+        data_directories = tuple(relative(name) for name in data_directories)
+        require(len(set(data_directories)) == len(data_directories) and "manifest.json" not in data_directories,
+                "INVALID_OUTPUT", "Data directories must be unique and cannot be manifest.json")
         require(len(set(data_files)) == len(data_files) and "manifest.json" not in data_files,
                 "INVALID_OUTPUT", "Data output names must be unique and cannot be manifest.json")
-        require(not data_files or self.data is not None, "INVALID_SCOPE", "Model outputs belong to outputs")
+        require(not (data_files or data_directories) or self.data is not None, "INVALID_SCOPE", "Model outputs belong to outputs")
         with file_lock(self.control / "writer.lock"):
             self._recover_unlocked()
             require(not (self.control / "release.json").exists(), "RELEASE_IMMUTABLE", "Released data run cannot be overwritten")
@@ -277,7 +280,7 @@ class ManifestStore:
             token = uuid.uuid4().hex
             report_target = self._target("outputs", dest.relative_to(self.layout.roots["outputs"]).as_posix(), token)
             targets = []
-            if data_files:
+            if data_files or data_directories:
                 target = self._target("processed", f"{self.data.key}/steps/{stage}/{phase}", token)
                 prior_data = [item for item in previous.get("outputs", []) if item["root"] == "processed"]
                 require(not target["existed"] or bool(prior_data), "UNMANAGED_DESTINATION", "Data directory is not managed by this stage")
@@ -311,7 +314,8 @@ class ManifestStore:
                                 for line in stream:
                                     portable(line)
                         name = output.relative_to(temp).as_posix()
-                        target = targets[0] if name in data_files else report_target
+                        is_data = name in data_files or any(name.startswith(folder + "/") for folder in data_directories)
+                        target = targets[0] if is_data else report_target
                         final = self._owned(target["destination"]) / name
                         root = target["destination"]["root"]
                         entries.append({"name": name, "root": root,
@@ -319,7 +323,9 @@ class ManifestStore:
                                         "bytes": output.stat().st_size})
                 require(bool(entries), "EMPTY_PUBLICATION", "A stage must publish at least one output")
                 require(set(data_files) <= {item["name"] for item in entries}, "MISSING_DATA_OUTPUT", "A declared data output was not produced")
-                for name in data_files:
+                require(all((temp / folder).is_dir() and not (temp / folder).is_symlink() for folder in data_directories),
+                        "MISSING_DATA_OUTPUT", "A declared data directory was not produced")
+                for name in (item["name"] for item in entries if item["root"] == "processed"):
                     target = self._owned(targets[0]["temp"]) / name
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copyfile(temp / name, target)
