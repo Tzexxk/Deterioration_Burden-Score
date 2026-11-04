@@ -187,7 +187,7 @@ def build_cxr_index(context, imaging_path="imaging/raw_audit.json") -> int:
     estimated = (record_file.stat().st_size if record_file.is_file() else 0) * 2 + 8 * 1024 * 1024
     with store.publish("step02", "build", inputs=[upstream],
                        configs=[context.config_ref(imaging_path)], details=details,
-                       required_bytes=estimated) as work:
+                       required_bytes=estimated, data_files=("cxr_index.parquet",)) as work:
         prior = store.validate(upstream)
         prior_count = prior["details"]["counts"]["unique_indexed_files_existing"]
         require(type(prior_count) is int and prior_count > 0, "INVALID_UPSTREAM", "Raw audit must identify local DICOM files")

@@ -111,7 +111,7 @@ class SelectionPipelineTests(unittest.TestCase):
         if rows is None:
             build_cxr_index(self.context)
         else:
-            with self.store.publish("step02", "build", inputs=[self.fixture.ref], details={"counts": {"output_rows": len(rows)}}) as work:
+            with self.store.publish("step02", "build", data_files=("cxr_index.parquet",), inputs=[self.fixture.ref], details={"counts": {"output_rows": len(rows)}}) as work:
                 pq.write_table(pa.Table.from_pylist(rows, schema=schema), work / "cxr_index.parquet")
 
     def select(self):
@@ -132,7 +132,7 @@ class SelectionPipelineTests(unittest.TestCase):
         self.assertEqual(manifest["generation"], 1)
         self.assertEqual(manifest["inputs"], [{"manifest": self.upstream, "generation": 1}])
         self.assertEqual(len(manifest["outputs"]), 2)
-        table = pq.read_table(self.output / "study_image_selection.parquet")
+        table = pq.read_table(self.context.layout.resolve(self.store.output_ref(self.store.validate(self.ref), "study_image_selection.parquet")))
         self.assertEqual(table.schema, SELECTION_SCHEMA)
         self.assertEqual(table.num_rows, 1)
         self.assertEqual(table.to_pylist()[0]["selected_dicom_id"], "abc1")
@@ -172,14 +172,14 @@ class SelectionPipelineTests(unittest.TestCase):
 
     def test_input_row_count_must_match_upstream_manifest(self):
         run_audit(self.context)
-        with self.store.publish("step02", "build", inputs=[self.fixture.ref], details={"counts": {"output_rows": 99}}) as work:
+        with self.store.publish("step02", "build", data_files=("cxr_index.parquet",), inputs=[self.fixture.ref], details={"counts": {"output_rows": 99}}) as work:
             pq.write_table(pa.Table.from_pylist([image()], schema=INDEX_SCHEMA), work / "cxr_index.parquet")
         self.error("UPSTREAM_COUNT_MISMATCH", self.select)
 
     def test_all_excluded_studies_publish_an_empty_typed_table(self):
         self.prepare([image(view="LATERAL")])
         self.select()
-        table = pq.read_table(self.output / "study_image_selection.parquet")
+        table = pq.read_table(self.context.layout.resolve(self.store.output_ref(self.store.validate(self.ref), "study_image_selection.parquet")))
         self.assertEqual(table.num_rows, 0)
         self.assertEqual(table.schema, SELECTION_SCHEMA)
         self.assertEqual(self.summary()["counts"]["excluded_studies"], 1)

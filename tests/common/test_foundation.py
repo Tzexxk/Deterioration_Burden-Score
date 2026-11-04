@@ -238,7 +238,7 @@ with store.publish('step01', 'audit') as work:
         source_path.write_text("changed", encoding="utf-8")
         self.assertEqual(target_path.read_text(encoding="utf-8"), "synthetic")
         # Remove source only inside this owned temporary test project.
-        source_root = self.layout.path("processed", "v1_r1")
+        source_root = self.layout.path("outputs", "data/v1_r1")
         self.assertTrue(source_root.is_relative_to(self.root))
         shutil.rmtree(source_root)
         self.assertEqual(target.validate(copied)["action"], "copied")

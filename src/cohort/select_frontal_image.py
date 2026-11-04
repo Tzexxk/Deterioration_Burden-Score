@@ -193,14 +193,12 @@ def select_frontal_images(context, imaging_path="imaging/raw_audit.json") -> int
     store = ManifestStore(context.layout, data=context)
     upstream = store.manifest_ref("step02", "build")
     details = {}
-    expected_index = context.layout.resolve(upstream).parent / "cxr_index.parquet"
+    expected_index = context.layout.resolve(store.output_ref(store.validate(upstream), "cxr_index.parquet"))
     estimated = (expected_index.stat().st_size if expected_index.is_file() else 0) * 2 + 8 * 1024 * 1024
     with store.publish("step03", "select", inputs=[upstream], configs=[context.config_ref(imaging_path)],
-                       details=details, required_bytes=estimated) as work:
+                       details=details, required_bytes=estimated, data_files=("study_image_selection.parquet",)) as work:
         prior = store.validate(upstream)
-        require("cxr_index.parquet" in {entry["path"] for entry in prior["outputs"]},
-                "MISSING_UPSTREAM_OUTPUT", "Step02 must publish cxr_index.parquet")
-        index_path = context.layout.resolve(upstream).parent / "cxr_index.parquet"
+        index_path = context.layout.resolve(store.output_ref(prior, "cxr_index.parquet"))
         studies, image_count = _load_studies(index_path)
         require(image_count == prior["details"]["counts"]["output_rows"],
                 "UPSTREAM_COUNT_MISMATCH", "Index rows differ from the Step02 count")

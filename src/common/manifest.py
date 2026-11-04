@@ -118,25 +118,23 @@ class ManifestStore:
             state = portable(read_json(path))
             require(state["scope"] == self.scope, "INVALID_RECOVERY", "Recovery scope mismatch")
             if state["status"] == "running":
-                dest = self._owned(state["destination"])
-                backup = self._owned(state["backup"])
-                if backup.exists():
-                    if dest.exists():
-                        # The destination is owned by this journal, never an input root.
+                for target in reversed(state["targets"]):
+                    dest = self._owned(target["destination"])
+                    backup = self._owned(target["backup"])
+                    if backup.exists():
+                        if dest.exists():
+                            shutil.rmtree(dest)
+                        _rename(backup, dest)
+                    elif not target["existed"] and dest.exists():
                         shutil.rmtree(dest)
-                    _rename(backup, dest)
-                elif dest.exists():
-                    manifest = dest / "manifest.json"
-                    current = read_json(manifest) if manifest.exists() else {}
-                    if current.get("generation", 0) > state["previous_generation"]:
-                        require(state["previous_generation"] == 0, "INVALID_RECOVERY", "Previous output is missing")
-                        shutil.rmtree(dest)
+                    elif target["existed"]:
+                        require(dest.is_dir(), "INVALID_RECOVERY", "Previous output is missing")
                 state["status"] = "failed"
                 state["error_type"] = "InterruptedPublication"
                 write_json(path, state)
-            for key in ("temp", "backup"):
-                if key in state:
-                    self._remove_temp(state[key])
+            for target in state.get("targets", []):
+                for key in ("temp", "backup"):
+                    self._remove_temp(target[key])
 
     def recover(self):
         with file_lock(self.control / "writer.lock"):
@@ -147,7 +145,8 @@ class ManifestStore:
         identifier(phase)
         if self.data:
             require(stage in {f"step{i:02d}" for i in range(1, 14)}, "INVALID_STAGE", "Data stages are step01 through step13")
-        area = area or ("processed" if self.data else "outputs")
+        area = area or "outputs"
+        require(area == "outputs", "INVALID_DESTINATION", "Manifests belong to outputs")
         base = self.data.key if area == "processed" and self.data else self.prefix
         directory = destination or f"{base}/steps/{stage}/{phase}"
         ref = self.layout.ref(area, f"{relative(directory)}/manifest.json")
@@ -157,9 +156,10 @@ class ManifestStore:
     def validate(self, ref, *, seen=None):
         path = self.layout.resolve(ref)
         manifest = portable(read_json(path))
-        require(manifest.get("schema") == 1 and manifest.get("status") == "complete",
+        require(manifest.get("schema") == 2 and manifest.get("status") == "complete",
                 "UPSTREAM_INCOMPLETE", "Manifest is not a completed publication")
         require(manifest.get("self") == ref, "INVALID_MANIFEST", "Manifest location does not match its reference")
+        require(ref["root"] == "outputs", "INVALID_MANIFEST", "Manifests belong to outputs")
         positive(manifest.get("generation"))
         visited = set() if seen is None else set(seen)
         key = (ref["root"], ref["path"])
@@ -192,29 +192,65 @@ class ManifestStore:
         require(state.get("scope") == scope and state.get("status") == "complete",
                 "UPSTREAM_INCOMPLETE", "Upstream is running, failed or awaiting recovery")
         require(state.get("generation") == manifest["generation"], "UPSTREAM_REBUILT", "Upstream publication has changed")
+        names = set()
         for item in manifest["outputs"]:
-            output = (path.parent / relative(item["path"])).resolve()
-            require(output.is_relative_to(path.parent.resolve()), "PATH_ESCAPE", "Output escaped its stage")
+            require(item["name"] not in names, "INVALID_MANIFEST", "Output names must be unique")
+            names.add(item["name"])
+            output = self._output_path(manifest, item)
             require(output.is_file() and output.stat().st_size == item["bytes"], "OUTPUT_MISSING_OR_CHANGED", "Published output is missing or its size changed")
         for item in manifest["inputs"]:
             upstream = self.validate(item["manifest"], seen=visited)
             require(upstream["generation"] == item["generation"], "UPSTREAM_REBUILT", "Input generation differs from its recorded generation")
         return manifest
 
+    def _output_path(self, manifest, item):
+        name = relative(item["name"])
+        root = item["root"]
+        if root == "processed":
+            scope = manifest["scope"]
+            require(scope["kind"] == "data", "INVALID_MANIFEST", "Only data publications use processed")
+            base = f"v{scope['version']}_r{scope['run']}/steps/{manifest['stage']}/{manifest['phase']}"
+            expected = self.layout.path(root, f"{base}/{name}")
+        else:
+            require(root == "outputs", "INVALID_MANIFEST", "Output root must be processed or outputs")
+            expected = self.layout.resolve(manifest["self"]).parent / name
+        output = self.layout.resolve({"root": root, "path": item["path"]})
+        require(output == expected, "INVALID_MANIFEST", "Output location does not match its stage and name")
+        return output
+
+    def output_ref(self, manifest, name):
+        """Locate a declared output by logical name, independently of its root."""
+        found = [item for item in manifest["outputs"] if item["name"] == relative(name)]
+        require(len(found) == 1, "MISSING_UPSTREAM_OUTPUT", "Required output is not uniquely registered")
+        self._output_path(manifest, found[0])
+        return {key: found[0][key] for key in ("root", "path")}
+
+    def _target(self, root, directory, token):
+        dest = self.layout.path(root, directory)
+        def ref(path):
+            value = self.layout.ref(root, path.relative_to(self.layout.roots[root]).as_posix())
+            self._owned(value)
+            return value
+        return {"destination": ref(dest),
+                "temp": ref(dest.parent / "temp" / (dest.name + "." + token)),
+                "backup": ref(dest.parent / "temp" / (dest.name + "." + token + ".backup")),
+                "existed": dest.exists()}
+
     @contextmanager
     def publish(self, stage, phase, *, inputs=(), configs=(), area=None,
-                destination=None, action="generated", origin=None, details=None, required_bytes=0):
+                destination=None, action="generated", origin=None, details=None, required_bytes=0,
+                data_files=()):
         ref = self.manifest_ref(stage, phase, area=area, destination=destination)
         dest = self.layout.resolve(ref).parent
         state_path = self.control / f"{stage}.{phase}.state.json"
+        data_files = tuple(relative(name) for name in data_files)
+        require(len(set(data_files)) == len(data_files) and "manifest.json" not in data_files,
+                "INVALID_OUTPUT", "Data output names must be unique and cannot be manifest.json")
+        require(not data_files or self.data is not None, "INVALID_SCOPE", "Model outputs belong to outputs")
         with file_lock(self.control / "writer.lock"):
             self._recover_unlocked()
             require(not (self.control / "release.json").exists(), "RELEASE_IMMUTABLE", "Released data run cannot be overwritten")
             require(type(required_bytes) is int and required_bytes >= 0, "INVALID_SIZE_ESTIMATE", "Expected a nonnegative byte estimate")
-            existing = dest.parent
-            while not existing.exists():
-                existing = existing.parent
-            require(shutil.disk_usage(existing).free >= required_bytes, "INSUFFICIENT_DISK_SPACE", "Insufficient space for the staged output; no automatic deletion or relocation")
             require(action in ("generated", "copied") and (action == "copied") == (origin is not None),
                     "INVALID_ACTION", "Copied publication requires explicit origin")
             bound = []
@@ -235,21 +271,35 @@ class ManifestStore:
             if previous:
                 require(previous.get("scope") == self.scope and previous.get("stage") == stage and previous.get("phase") == phase,
                         "INVALID_DESTINATION", "Destination belongs to another stage")
+                require(previous.get("schema") == 2, "INVALID_MANIFEST", "Output layout must be migrated before execution")
                 require(self.data is not None, "EXPERIMENT_EXISTS", "Model publication already exists; use its explicit resume interface")
             generation = previous.get("generation", 0) + 1
             token = uuid.uuid4().hex
-            temp = dest.parent / "temp" / (dest.name + "." + token)
-            backup = dest.parent / "temp" / (dest.name + "." + token + ".backup")
-            root = ref["root"]
-            temp_ref = self.layout.ref(root, temp.relative_to(self.layout.roots[root]).as_posix())
-            backup_ref = self.layout.ref(root, backup.relative_to(self.layout.roots[root]).as_posix())
+            report_target = self._target("outputs", dest.relative_to(self.layout.roots["outputs"]).as_posix(), token)
+            targets = []
+            if data_files:
+                target = self._target("processed", f"{self.data.key}/steps/{stage}/{phase}", token)
+                prior_data = [item for item in previous.get("outputs", []) if item["root"] == "processed"]
+                require(not target["existed"] or bool(prior_data), "UNMANAGED_DESTINATION", "Data directory is not managed by this stage")
+                targets.append(target)
+            else:
+                require(not any(item["root"] == "processed" for item in previous.get("outputs", [])),
+                        "INVALID_OUTPUT", "Cannot silently remove the data destination")
+            targets.append(report_target)
+            # Check both volumes conservatively; outputs also stages data before routing.
+            for target in targets:
+                existing = self._owned(target["destination"]).parent
+                while not existing.exists():
+                    existing = existing.parent
+                require(shutil.disk_usage(existing).free >= required_bytes, "INSUFFICIENT_DISK_SPACE", "Insufficient space for staged output; no automatic deletion or relocation")
             journal = {"scope": self.scope, "stage": stage, "phase": phase, "status": "running",
-                       "previous_generation": generation - 1, "destination": self.layout.ref(root, dest.relative_to(self.layout.roots[root]).as_posix()),
-                       "temp": temp_ref, "backup": backup_ref}
+                       "previous_generation": generation - 1, "targets": targets}
             write_json(state_path, journal)
             committed = False
             try:
-                temp.mkdir(parents=True)
+                for target in targets:
+                    self._owned(target["temp"]).mkdir(parents=True)
+                temp = self._owned(report_target["temp"])
                 yield temp
                 require(not (temp / "manifest.json").exists(), "RESERVED_FILENAME", "manifest.json belongs to the publisher")
                 entries = []
@@ -260,19 +310,34 @@ class ManifestStore:
                             with output.open(encoding="utf-8-sig") as stream:
                                 for line in stream:
                                     portable(line)
-                        entries.append({"path": output.relative_to(temp).as_posix(), "bytes": output.stat().st_size})
+                        name = output.relative_to(temp).as_posix()
+                        target = targets[0] if name in data_files else report_target
+                        final = self._owned(target["destination"]) / name
+                        root = target["destination"]["root"]
+                        entries.append({"name": name, "root": root,
+                                        "path": final.relative_to(self.layout.roots[root]).as_posix(),
+                                        "bytes": output.stat().st_size})
                 require(bool(entries), "EMPTY_PUBLICATION", "A stage must publish at least one output")
+                require(set(data_files) <= {item["name"] for item in entries}, "MISSING_DATA_OUTPUT", "A declared data output was not produced")
+                for name in data_files:
+                    target = self._owned(targets[0]["temp"]) / name
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(temp / name, target)
+                    (temp / name).unlink()
                 for item in bound:
                     require(self.validate(item["manifest"])["generation"] == item["generation"], "UPSTREAM_REBUILT", "Input changed during execution")
-                manifest = {"schema": 1, "self": ref, "scope": self.scope, "stage": stage, "phase": phase,
+                manifest = {"schema": 2, "self": ref, "scope": self.scope, "stage": stage, "phase": phase,
                             "generation": generation, "status": "complete", "state": self._ref(state_path),
                             "created_utc": datetime.now(timezone.utc).isoformat(), "inputs": bound,
                             "configs": list(configs), "outputs": entries, "action": action,
                             "origin": origin, "details": details or {}}
                 write_json(temp / "manifest.json", manifest)
-                if dest.exists():
-                    _rename(dest, backup)
-                _rename(temp, dest)
+                # Data first, manifest last; consumers require the shared complete state.
+                for target in targets:
+                    final = self._owned(target["destination"])
+                    if final.exists():
+                        _rename(final, self._owned(target["backup"]))
+                    _rename(self._owned(target["temp"]), final)
                 journal.update(status="complete", generation=generation)
                 write_json(state_path, journal)
                 committed = True
@@ -281,8 +346,9 @@ class ManifestStore:
                 raise
             finally:
                 if committed:
-                    self._remove_temp(temp_ref)
-                    self._remove_temp(backup_ref)
+                    for target in targets:
+                        for key in ("temp", "backup"):
+                            self._remove_temp(target[key])
 
     def freeze(self, acceptance_ref):
         require(self.data is not None, "INVALID_SCOPE", "Only data runs have a release freeze")
@@ -305,11 +371,12 @@ class ManifestStore:
             require((source_store.control / "release.json").is_file(), "SOURCE_NOT_RELEASED", "Copy source must be a frozen release")
             old = source_store.validate(source)
             origin = {"manifest": source, "scope": old["scope"], "generation": old["generation"]}
+            data_files = [item["name"] for item in old["outputs"] if item["root"] == "processed"]
             with self.publish(stage, phase, inputs=inputs, configs=configs, destination=destination, action="copied", origin=origin,
-                              required_bytes=sum(item["bytes"] for item in old["outputs"]) + 8192) as work:
+                              data_files=data_files, required_bytes=sum(item["bytes"] for item in old["outputs"]) + 8192) as work:
                 for item in old["outputs"]:
-                    src = source_store.layout.resolve(source).parent / relative(item["path"])
-                    target = work / relative(item["path"])
+                    src = source_store._output_path(old, item)
+                    target = work / relative(item["name"])
                     require(not src.is_symlink(), "INVALID_REUSE", "Copy source cannot be a symbolic link")
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copyfile(src, target)
