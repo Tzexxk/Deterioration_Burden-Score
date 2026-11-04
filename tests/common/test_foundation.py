@@ -1,24 +1,48 @@
 """Small synthetic checks only; no patient data and no source datasets."""
 
 import argparse
-from contextlib import redirect_stderr
 import io
 import json
 import os
-from pathlib import Path
 import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stderr
+from pathlib import Path
 from unittest.mock import patch
 
 from src.common.config import DataContext, add_data_arguments, load_model_config
-from src.common.manifest import ManifestStore, file_lock, write_json
-from src.common.paths import Layout, PipelineError, portable, read_json
+from src.common.manifest import ManifestStore, _rename, file_lock, write_json
+from src.common.paths import Layout, PipelineError, portable
 
 
 class FoundationTests(unittest.TestCase):
+    def test_windows_rename_denial_retries_then_succeeds(self):
+        busy = PermissionError("synthetic sharing denial")
+        busy.winerror = 5
+        with patch.object(Path, "rename", side_effect=[busy, None]) as rename, patch("src.common.manifest.time.sleep") as sleep:
+            _rename(Path("source"), Path("destination"))
+        self.assertEqual(rename.call_count, 2)
+        sleep.assert_called_once_with(0.05)
+
+    def test_windows_rename_denial_has_a_fixed_retry_limit(self):
+        busy = PermissionError("synthetic persistent denial")
+        busy.winerror = 32
+        with patch.object(Path, "rename", side_effect=busy) as rename, patch("src.common.manifest.time.sleep") as sleep:
+            with self.assertRaises(PermissionError):
+                _rename(Path("source"), Path("destination"))
+        self.assertEqual(rename.call_count, 5)
+        self.assertEqual(sleep.call_count, 4)
+
+    def test_unrelated_rename_permission_errors_are_not_retried(self):
+        error = PermissionError("synthetic non-sharing error")
+        with patch.object(Path, "rename", side_effect=error), patch("src.common.manifest.time.sleep") as sleep:
+            with self.assertRaises(PermissionError):
+                _rename(Path("source"), Path("destination"))
+        sleep.assert_not_called()
+
     def setUp(self):
         temp_base = Path(__file__).resolve().parents[2] / "outputs/foundation_tests"
         temp_base.mkdir(parents=True, exist_ok=True)

@@ -2,14 +2,23 @@
 
 from __future__ import annotations
 
-from contextlib import contextmanager
-from datetime import datetime, timezone
 import json
 import os
 import shutil
+import time
 import uuid
+from contextlib import contextmanager
+from datetime import datetime, timezone
 
-from .paths import PipelineError, identifier, portable, positive, read_json, relative, require
+from .paths import (
+    PipelineError,
+    identifier,
+    portable,
+    positive,
+    read_json,
+    relative,
+    require,
+)
 
 
 def write_json(path, value):
@@ -25,6 +34,18 @@ def write_json(path, value):
         temp.replace(path)
     finally:
         temp.unlink(missing_ok=True)
+
+
+def _rename(source, destination):
+    """Retry bounded Windows sharing/access denials without changing the target."""
+    for attempt in range(5):
+        try:
+            source.rename(destination)
+            return
+        except PermissionError as error:
+            if getattr(error, "winerror", None) not in {5, 32, 33} or attempt == 4:
+                raise
+            time.sleep(0.05 * 2 ** attempt)
 
 
 @contextmanager
@@ -103,7 +124,7 @@ class ManifestStore:
                     if dest.exists():
                         # The destination is owned by this journal, never an input root.
                         shutil.rmtree(dest)
-                    backup.rename(dest)
+                    _rename(backup, dest)
                 elif dest.exists():
                     manifest = dest / "manifest.json"
                     current = read_json(manifest) if manifest.exists() else {}
@@ -250,8 +271,8 @@ class ManifestStore:
                             "origin": origin, "details": details or {}}
                 write_json(temp / "manifest.json", manifest)
                 if dest.exists():
-                    dest.rename(backup)
-                temp.rename(dest)
+                    _rename(dest, backup)
+                _rename(temp, dest)
                 journal.update(status="complete", generation=generation)
                 write_json(state_path, journal)
                 committed = True
