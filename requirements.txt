@@ -1,0 +1,28 @@
+# Burden-Score data-processing and model runtime reference
+# Reference runtime: Python 3.11.16; dependency versions checked on 2026-11-05.
+# This is a direct-dependency reference, not a full conda environment lock.
+# CUDA-tagged wheels require a matching package source for a fresh installation;
+# clean-environment installation instructions will be validated separately.
+
+# Numerical computation, tables and evaluation
+numpy==2.4.6
+scipy==1.17.1
+pandas==3.0.6
+pyarrow==24.0.0
+duckdb==1.5.5
+tqdm==4.70.0
+scikit-learn==1.9.1
+
+# DICOM decoding and image preparation
+pydicom==3.0.2
+Pillow==11.1.0
+pylibjpeg==2.1.0
+pylibjpeg-libjpeg==2.4.0
+pylibjpeg-openjpeg==2.6.0
+pylibjpeg-rle==2.2.0
+pyjpegls==1.5.1
+
+# Model training
+catboost==1.2.10
+torch==2.14.0+cu132
+torchvision==0.29.0+cu132

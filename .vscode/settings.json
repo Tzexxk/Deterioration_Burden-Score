@@ -1,0 +1,21 @@
+{
+  "python.testing.pytestEnabled": false,
+  "python.testing.unittestEnabled": true,
+  "python.testing.unittestArgs": [
+    "-v",
+    "-s",
+    "./tests",
+    "-p",
+    "test_*.py"
+  ],
+  "files.watcherExclude": {
+    "**/data/processed/**": true,
+    "**/data/cache/**": true,
+    "**/outputs/**": true
+  },
+  "search.exclude": {
+    "**/data/processed/**": true,
+    "**/data/cache/**": true,
+    "**/outputs/**": true
+  }
+}
