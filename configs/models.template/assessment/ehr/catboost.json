@@ -1,0 +1,38 @@
+{
+  "data_release": "v1_r3",
+  "defaults": {
+    "sensitivity_target": 0.8,
+    "plot_training_history": true,
+    "specificity_target": 0.8
+  },
+  "experiments": [
+    {
+      "id": "d2_l210",
+      "description": "Development assessment for d2_l210",
+      "parameters": {
+        "train_id": "d2_l210"
+      }
+    },
+    {
+      "id": "d2_l230",
+      "description": "Development assessment for d2_l230",
+      "parameters": {
+        "train_id": "d2_l230"
+      }
+    },
+    {
+      "id": "d3_l210",
+      "description": "Development assessment for d3_l210",
+      "parameters": {
+        "train_id": "d3_l210"
+      }
+    },
+    {
+      "id": "d3_l230",
+      "description": "Development assessment for d3_l230",
+      "parameters": {
+        "train_id": "d3_l230"
+      }
+    }
+  ]
+}

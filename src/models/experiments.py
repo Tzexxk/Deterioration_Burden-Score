@@ -3,8 +3,8 @@
 import json
 
 from src.common.config import load_model_config
-from src.common.manifest import ManifestStore
-from src.common.paths import identifier, read_json, require
+from src.common.manifest import ManifestStore, file_lock
+from src.common.paths import PipelineError, identifier, read_json, require
 
 
 def experiment_store(layout, stage, modality, model, experiment):
@@ -13,7 +13,8 @@ def experiment_store(layout, stage, modality, model, experiment):
 
 def read_batch(layout, path, selected=None):
     document = load_model_config(layout, path)
-    require(set(document) == {"data_release", "defaults", "experiments"} and isinstance(document["defaults"], dict),
+    required = {"data_release", "defaults", "experiments"}
+    require(set(document) == required and isinstance(document["defaults"], dict),
             "INVALID_MODEL_BATCH", "Expected data_release, defaults and experiments")
     entries = document["experiments"]
     require(isinstance(entries, list) and bool(entries), "INVALID_MODEL_BATCH", "At least one experiment is required")
@@ -68,8 +69,37 @@ def update_index(root, stage):
             details = changed_parameters(baseline["parameters"], config["parameters"])
             description = f" {config['description']}." if config["description"] else ""
             changes = "; ".join(details) or "same parameters as baseline"
-            lines.append(f"- **{config['id']}** · {manifest['status']} · {config['data_release']}.{description} {changes}. [Artifacts]({path}/)")
+            train_id = manifest["details"].get("train_id")
+            upstream = f" Training ID: `{train_id}`." if train_id else ""
+            lines.append(f"- **{config['id']}** · {manifest['status']} · {config['data_release']}.{description}{upstream} {changes}. [Artifacts]({path}/)")
     lines.extend(f"- **{key}** · {status}" for key, status in pending)
     temp = root / ".INDEX.md.tmp"
     temp.write_text("\n".join(lines) + "\n", encoding="utf-8")
     temp.replace(root / "INDEX.md")
+
+
+def completed_result(store, ref, experiment, inputs):
+    if not store.layout.resolve(ref).is_file():
+        return None
+    manifest = store.validate(ref)
+    snapshot = read_json(store.layout.resolve(store.output_ref(manifest, "effective_configuration.json")))
+    require(manifest["scope"] == store.scope and snapshot == experiment and manifest["inputs"] == inputs,
+            "EXPERIMENT_ID_CONFLICT", "Completed ID has a different configuration or upstream binding; choose a new ID")
+    return {"id": experiment["id"], "status": "unchanged", "manifest": ref}
+
+
+def run_model_batch(layout, stage, modality, model, experiments, publish):
+    root = layout.path("outputs", f"models/{stage}/{modality}/{model}")
+    results = []
+    with file_lock(root / ".batch.lock"):
+        for experiment in experiments:
+            try:
+                result = publish(experiment)
+            except PipelineError as error:
+                result = {"id": experiment["id"], "status": "failed", "error": error.code}
+            except Exception as error:
+                result = {"id": experiment["id"], "status": "failed", "error": type(error).__name__}
+            results.append(result)
+        update_index(root, stage)
+    return {"status": "failed" if any(item["status"] == "failed" for item in results) else "complete",
+            "data_release": experiments[0]["data_release"], "experiments": results}

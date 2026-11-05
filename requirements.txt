@@ -12,6 +12,7 @@ pyarrow==24.0.0
 duckdb==1.5.5
 tqdm==4.70.0
 scikit-learn==1.9.1
+matplotlib==3.11.2
 
 # DICOM decoding and image preparation
 pydicom==3.0.2

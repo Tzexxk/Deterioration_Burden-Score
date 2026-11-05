@@ -4,10 +4,15 @@ from importlib.metadata import version
 
 import numpy as np
 
-from src.common.manifest import file_lock, write_json
-from src.common.paths import PipelineError, read_json, require
+from src.common.manifest import write_json
+from src.common.paths import require
 from src.models.ehr_data import checked_input_summary, load_package
-from src.models.experiments import experiment_store, read_batch, update_index
+from src.models.experiments import (
+    completed_result,
+    experiment_store,
+    read_batch,
+    run_model_batch,
+)
 from src.models.released_data import ReleasedData
 from src.models.train.ehr.catboost.protocol import validate_training_config
 
@@ -51,12 +56,9 @@ def publish_training(layout, config_path, experiment, package, input_summary):
     store = experiment_store(layout, "train", "ehr", "catboost", key)
     ref = store.manifest_ref("train", "run")
     source = package.release.acceptance
-    if layout.resolve(ref).is_file():
-        manifest = store.validate(ref)
-        snapshot = read_json(layout.resolve(store.output_ref(manifest, "effective_configuration.json")))
-        require(snapshot == experiment and manifest["inputs"] == [{"manifest": source["self"], "generation": source["generation"]}],
-                "EXPERIMENT_ID_CONFLICT", "Completed ID has a different configuration or data release; choose a new ID")
-        return {"id": key, "status": "unchanged", "manifest": ref}
+    existing = completed_result(store, ref, experiment, [{"manifest": source["self"], "generation": source["generation"]}])
+    if existing:
+        return existing
     with store.publish("train", "run", inputs=[source["self"]], configs=[layout.ref("project", config_path)],
                        details={"data_release": experiment["data_release"], "folds": len(package.cv["folds"])}) as work:
         results = []
@@ -76,17 +78,5 @@ def run_training(layout, config_path, selected=None):
     require(version("catboost") == "1.2.10", "INVALID_CATBOOST_VERSION", "Use CatBoost 1.2.10 for this protocol")
     package = load_package(ReleasedData.load(layout, experiments[0]["data_release"]))
     input_summary = checked_input_summary(package)
-    root = layout.path("outputs", "models/train/ehr/catboost")
-    results = []
-    with file_lock(root / ".batch.lock"):
-        for experiment in experiments:
-            try:
-                result = publish_training(layout, config_path, experiment, package, input_summary)
-            except PipelineError as error:
-                result = {"id": experiment["id"], "status": "failed", "error": error.code}
-            except Exception as error:
-                result = {"id": experiment["id"], "status": "failed", "error": type(error).__name__}
-            results.append(result)
-        update_index(root, "train")
-    return {"status": "failed" if any(item["status"] == "failed" for item in results) else "complete",
-            "data_release": experiments[0]["data_release"], "experiments": results}
+    return run_model_batch(layout, "train", "ehr", "catboost", experiments,
+                           lambda experiment: publish_training(layout, config_path, experiment, package, input_summary))
