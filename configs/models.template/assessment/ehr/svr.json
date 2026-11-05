@@ -1,0 +1,31 @@
+{
+  "data_release": "v1_r3",
+  "defaults": {
+    "sensitivity_target": 0.8,
+    "specificity_target": 0.8,
+    "plot_training_history": false
+  },
+  "experiments": [
+    {
+      "id": "s01",
+      "description": "SVR development assessment for s01",
+      "parameters": {
+        "train_id": "s01"
+      }
+    },
+    {
+      "id": "s02",
+      "description": "SVR development assessment for s02",
+      "parameters": {
+        "train_id": "s02"
+      }
+    },
+    {
+      "id": "s03",
+      "description": "SVR development assessment for s03",
+      "parameters": {
+        "train_id": "s03"
+      }
+    }
+  ]
+}
