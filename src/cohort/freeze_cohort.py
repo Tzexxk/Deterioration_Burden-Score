@@ -116,12 +116,23 @@ def validate_cohort(connection, context: dict) -> tuple[pa.Table, pa.Table]:
     """Reconstruct final evidence, then retain original label types in the intersection."""
     decision = context["decision"]
     artifacts = {**context["artifacts"], "evidence": context["evidence_path"]}
+    policy = decision["review_policy"]
     counts = validate_labels(
-        connection, artifacts, decision["horizon_hours"]
+        connection, artifacts, decision["horizon_hours"], review_policy=policy
     )
+    allowed_status = (
+        "(review_status IN ('not_required','reviewed') "
+        "AND event_status IN ('positive','preexisting_only','no_qualifying_record'))"
+    )
+    if policy == "strict":
+        # validate_labels has already checked the uncertainty classification.
+        allowed_status += (
+            " OR (qualifies IS NULL AND blocks_event=0 "
+            "AND review_status='pending' AND event_status='unresolved')"
+        )
     _reject(
         connection,
-        "SELECT count(*) FROM evidence WHERE review_status IS NULL OR review_status NOT IN ('not_required','reviewed') OR event_status IS NULL OR event_status NOT IN ('positive','preexisting_only','no_qualifying_record')",
+        f"SELECT count(*) FROM evidence WHERE ({allowed_status}) IS NOT TRUE",
         "Unresolved final evidence status",
     )
     if counts != decision["counts"]:

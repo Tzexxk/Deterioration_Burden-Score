@@ -396,7 +396,10 @@ class StrictPipelineTests(unittest.TestCase):
         return rows, relative
 
     def test_reviewed_audit_retains_generation_then_freezes_and_builds(self):
-        from src.cohort.build_labels import build_burden_labels
+        import duckdb
+
+        from src.cohort.build_labels import build_burden_labels, frozen_inputs
+        from src.cohort.freeze_cohort import QC_FIELDS, validate_cohort
 
         self.audit()
         rows, ref = self.fill_event_reviews()
@@ -436,6 +439,51 @@ class StrictPipelineTests(unittest.TestCase):
             ],
             "strict",
         )
+
+        frozen, audit, decision, _, _, artifacts = frozen_inputs(self.context, self.store)
+        publication = self.store.validate(self.store.manifest_ref("step06", "build"))
+        def published(name):
+            return self.context.layout.resolve(self.store.output_ref(publication, name))
+
+        labels_path = published("study_burden_labels.parquet")
+        labels = pq.read_table(labels_path, columns=["sample_id"])
+        evidence = pq.read_table(published("event_evidence.parquet"))
+        rows = evidence.to_pylist()
+        nonblocking = {
+            **rows[0],
+            "source_record_key": "synthetic-nonblocking",
+            "event_time": None,
+            "first_event_time": None,
+            "qualifies": None,
+            "blocks_event": 0,
+            "event_status": "unresolved",
+            "review_status": "pending",
+            "uncertainty_relevance": "history_without_window_infusion",
+        }
+        evidence_path = self.fixture.root / "synthetic_evidence.parquet"
+        context = {
+            "data_context": self.context,
+            "decision": decision,
+            "artifacts": artifacts,
+            "labels_path": labels_path,
+            "evidence_path": evidence_path,
+            "audit_generation": audit["generation"],
+            "endpoint_generation": frozen["generation"],
+            "release_version": self.context.key,
+            "qc_records": [
+                {**dict.fromkeys(QC_FIELDS.values(), ""), "sample_id": sample, "qc_status": "pass"}
+                for sample in labels["sample_id"].to_pylist()
+            ],
+        }
+        pq.write_table(pa.Table.from_pylist([*rows, nonblocking], schema=evidence.schema), evidence_path)
+        with duckdb.connect() as connection:
+            cohort, _ = validate_cohort(connection, context)
+        self.assertEqual(cohort.num_rows, labels.num_rows)
+
+        nonblocking["blocks_event"] = 1
+        pq.write_table(pa.Table.from_pylist([*rows, nonblocking], schema=evidence.schema), evidence_path)
+        with duckdb.connect() as connection, self.assertRaisesRegex(ValueError, "Unresolved or out-of-window evidence"):
+            validate_cohort(connection, context)
 
     def test_review_stale_generation_rolls_back_without_discarding_previous_evidence(
         self,
