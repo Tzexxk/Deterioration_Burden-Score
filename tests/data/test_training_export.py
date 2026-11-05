@@ -75,7 +75,7 @@ class TrainingExportTests(unittest.TestCase):
             pq.write_table(ehr, work / "ehr_features_raw.parquet", compression="zstd")
             write_json(work / "feature_schema.json", self.schema)
         source = self.store.validate(self.store.manifest_ref("step11","build"))
-        self.inputs = {"cohort":self.cohort, "patients":self.patients, "schema":self.schema, "ehr":ehr,
+        self.inputs = {"cohort":self.cohort, "patients":self.patients, "cv_files":{}, "schema":self.schema, "ehr":ehr,
                        "ehr_path":self.context.layout.resolve(self.store.output_ref(source,"ehr_features_raw.parquet")),
                        "schema_path":self.context.layout.resolve(self.store.output_ref(source,"feature_schema.json")),
                        "qc_records":cohort, "image_manifest":self.store.validate(self.store.manifest_ref("step07","prepare")),
@@ -115,10 +115,55 @@ class TrainingExportTests(unittest.TestCase):
                 self.assertEqual(np.load(package/row["image_relpath"],allow_pickle=False).shape, (224,224))
             metadata = read_json(package/"dataset_metadata.json")
             self.assertEqual(metadata["release_id"],"v1_r1")
+            self.assertEqual(metadata["split_column"], "split")
+            self.assertNotIn("split_columns", metadata)
             self.assertEqual(len(metadata["files"]),10)
             self.assertFalse(any("sha256" in key for key in metadata))
         self.assertEqual({e["name"] for e in self.store.validate(self.store.manifest_ref("step12","export"))["outputs"] if e["root"]=="outputs"},
                          {"image_manifest.parquet","training_package_export.json","run_metadata.json","report.md"})
+
+    def test_five_fold_inputs_are_exported_once_and_declared(self):
+        # Step09 verifies clinical split identity; this fixture tests the package transport.
+        indices = self.root / "indices.json"
+        write_json(indices, {"test_indices": [3], "folds": list(range(1, 6))})
+        files = {"cross_validation_indices.json": indices}
+        for fold in range(1, 6):
+            source = self.root / f"fold_{fold}.parquet"
+            patients = self.patients.set_column(1, "split", pa.array([
+                "validation" if fold == 2 else "train",
+                "validation" if fold == 1 else "train",
+                "test",
+            ]))
+            pq.write_table(patients, source)
+            files[f"splits/fold_{fold}/patient_split.parquet"] = source
+        self.inputs["cv_files"] = files
+        self.assertEqual(self.run_export(), 0)
+        meta = read_json(self.output("package/dataset_metadata.json"))
+        cv = meta["cross_validation"]
+        self.assertEqual(cv["indices_file"], "cross_validation_indices.json")
+        self.assertEqual(cv["split_column_semantics"], "per_fold")
+        self.assertEqual(meta["split_columns"], list(contract.FOLD_SPLIT_COLUMNS))
+        self.assertNotIn("split_column", meta)
+        self.assertEqual(meta["split_counts"]["fold_2_validation"]["studies"], 2)
+        self.assertEqual(meta["split_counts"]["test"]["studies"], 1)
+        self.assertEqual(cv["patient_split_files"], sorted(set(files) - {cv["indices_file"]}))
+        self.assertEqual(len(meta["files"]), 16)
+        with zipfile.ZipFile(self.output("training_package.zip")) as archive:
+            for name, source in files.items():
+                self.assertEqual(self.output(f"package/{name}").read_bytes(), source.read_bytes())
+                self.assertEqual(archive.read(f"package/{name}"), source.read_bytes())
+        samples = pq.read_table(self.output("package/samples.parquet"))
+        self.assertNotIn("split", samples.column_names)
+        self.assertEqual(contract.split_columns(samples), contract.FOLD_SPLIT_COLUMNS)
+        self.assertEqual(samples["split_fold_1"].to_pylist(), ["train", "train", "validation", "test"])
+        self.assertEqual(samples["split_fold_2"].to_pylist(), ["validation", "validation", "train", "test"])
+        self.assertEqual(samples["split_fold_5"].to_pylist(), ["train", "train", "train", "test"])
+        images = pq.read_table(self.output("image_manifest.parquet"))
+        self.assertEqual(samples.select(contract.FOLD_SPLIT_COLUMNS), images.select(contract.FOLD_SPLIT_COLUMNS))
+        bad = samples.set_column(samples.schema.get_field_index("split_fold_3"), "split_fold_3",
+                                 pa.array(["validation", "validation", "train", "test"]))
+        with self.assertRaisesRegex(ValueError, "exactly one fold"):
+            contract.validate_samples(bad)
 
     def test_summary_has_distinct_patient_and_study_denominators(self):
         samples = contract.build_samples(self.cohort,self.patients)

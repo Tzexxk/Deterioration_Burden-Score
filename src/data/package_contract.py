@@ -34,6 +34,23 @@ SAMPLE_SCHEMA = pa.schema(
 )
 
 
+FOLD_SPLIT_COLUMNS = tuple(f"split_fold_{i}" for i in range(1, 6))
+CV_SAMPLE_SCHEMA = pa.schema(
+    [replacement for field in SAMPLE_SCHEMA for replacement in (
+        [pa.field(name, pa.string()) for name in FOLD_SPLIT_COLUMNS]
+        if field.name == "split" else [field]
+    )]
+)
+
+
+def split_columns(samples: pa.Table) -> tuple[str, ...]:
+    if samples.schema == SAMPLE_SCHEMA:
+        return ("split",)
+    if samples.schema == CV_SAMPLE_SCHEMA:
+        return FOLD_SPLIT_COLUMNS
+    raise ValueError("Invalid samples schema")
+
+
 SUMMARY_COLUMNS = ["split", "metric", "value", "unit", "denominator"]
 
 
@@ -51,37 +68,39 @@ def expected_image_path(row: dict) -> str:
     return f"images/p{str(row['subject_id'])[:2]}/p{row['subject_id']}/s{row['study_id']}.npy"
 
 
-def build_samples(cohort: pa.Table, patients: pa.Table) -> pa.Table:
-    records = patients.to_pylist()
-    assignments = {r["subject_id"]: r["split"] for r in records}
-    if (
-        len(assignments) != len(records)
-        or any(v not in SPLITS for v in assignments.values())
-        or set(assignments) != set(cohort["subject_id"].to_pylist())
-    ):
-        raise ValueError("Patient split keys or assignments disagree with cohort")
+def build_samples(
+    cohort: pa.Table, patients: pa.Table, *, fold_patients: list[pa.Table] | None = None
+) -> pa.Table:
+    if fold_patients is not None and len(fold_patients) != len(FOLD_SPLIT_COLUMNS):
+        raise ValueError("Five patient tables are required for cross-validation")
+    schema = SAMPLE_SCHEMA if fold_patients is None else CV_SAMPLE_SCHEMA
+    columns = ("split",) if fold_patients is None else FOLD_SPLIT_COLUMNS
+    tables = [patients] if fold_patients is None else fold_patients
+    subjects = set(cohort["subject_id"].to_pylist())
+    assignments = {}
+    for column, table in zip(columns, tables, strict=True):
+        records = table.to_pylist()
+        mapping = {r["subject_id"]: r["split"] for r in records}
+        if len(mapping) != len(records) or any(v not in SPLITS for v in mapping.values()) or set(mapping) != subjects:
+            raise ValueError("Patient split keys or assignments disagree with cohort")
+        assignments[column] = mapping
     rows = []
     for original in sorted(cohort.to_pylist(), key=lambda r: r["sample_id"]):
-        row = {
-            k: original[k]
-            for k in SAMPLE_SCHEMA.names
-            if k not in {"split", "image_relpath"}
-        }
-        row.update(
-            split=assignments[row["subject_id"]], image_relpath=original["npy_relpath"]
-        )
+        row = {k: original[k] for k in schema.names if k not in {*columns, "image_relpath"}}
+        row.update({column: mapping[row["subject_id"]] for column, mapping in assignments.items()})
+        row["image_relpath"] = original["npy_relpath"]
         if row["image_relpath"] != expected_image_path(row):
             raise ValueError("Frozen image path does not follow the package layout")
         rows.append(row)
-    table = pa.Table.from_pylist(rows, schema=SAMPLE_SCHEMA)
+    table = pa.Table.from_pylist(rows, schema=schema)
     validate_samples(table)
     return table
 
 
 def validate_samples(samples: pa.Table) -> None:
+    columns = split_columns(samples)
     if (
-        samples.schema != SAMPLE_SCHEMA
-        or not samples.num_rows
+        not samples.num_rows
         or any(samples[k].null_count for k in samples.column_names)
     ):
         raise ValueError("Samples schema or required fields are invalid")
@@ -100,10 +119,14 @@ def validate_samples(samples: pa.Table) -> None:
             raise ValueError("Invalid or duplicated sample identity")
         seen.add(key)
         triples.add(triple)
-        patient, split = row["subject_id"], row["split"]
-        if split not in SPLITS or patient in patients and patients[patient] != split:
+        patient = row["subject_id"]
+        membership = tuple(row[k] for k in columns)
+        if any(part not in SPLITS for part in membership) or (patient in patients and patients[patient] != membership):
             raise ValueError("A patient crosses splits or has an invalid split")
-        patients[patient] = split
+        if columns == FOLD_SPLIT_COLUMNS and membership != ("test",) * 5:
+            if "test" in membership or membership.count("validation") != 1:
+                raise ValueError("Each patient must be in the fixed test set or validate in exactly one fold")
+        patients[patient] = membership
         path = row["image_relpath"]
         if path != expected_image_path(row) or path in paths:
             raise ValueError("Invalid or duplicated package image path")
@@ -138,8 +161,17 @@ def validate_samples(samples: pa.Table) -> None:
 
 def summary_rows(samples: pa.Table) -> list[dict]:
     result = []
-    for split in ["all", *SPLITS]:
-        rows = [r for r in samples.to_pylist() if split == "all" or r["split"] == split]
+    columns = split_columns(samples)
+    groups = (
+        [(part, "split", part) for part in SPLITS]
+        if columns == ("split",)
+        else [("test", columns[0], "test")]
+        + [(f"fold_{i}_{part}", column, part)
+           for i, column in enumerate(columns, 1) for part in ("train", "validation")]
+    )
+    records = samples.to_pylist()
+    for split, column, part in [("all", None, None), *groups]:
+        rows = [r for r in records if column is None or r[column] == part]
         patients = {r["subject_id"] for r in rows}
 
         def add(metric, value, unit, denominator):
