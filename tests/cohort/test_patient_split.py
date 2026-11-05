@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import duckdb
 import pyarrow as pa
 import pyarrow.parquet as pq
 
@@ -14,6 +15,7 @@ from src.cohort.create_patient_split import (
 )
 from src.common.manifest import write_json
 from src.common.paths import PipelineError, read_json
+from src.ehr.build_ehr_features import verify_upstream
 from tests.cohort.test_patient_allocation import approved_settings, synthetic_cohort
 from tests.common import test_foundation as foundation
 
@@ -117,6 +119,15 @@ class PatientSplitTests(unittest.TestCase):
             validation_seen.update(fold["validation_indices"])
         self.assertEqual(validation_seen, set(indices["development_indices"]))
         self.assertEqual({r["name"] for r in manifest["outputs"] if r["root"] == "processed"}, names)
+        with duckdb.connect() as connection:
+            self.assertTrue(verify_upstream(self.context, self.store, connection).equals(self.cohort))
+        # The secondary folds must be checked independently of the primary view.
+        original = pq.read_table
+        fold_2 = self.output("fold_2/patient_split.parquet")
+        with patch("src.ehr.build_ehr_features.pq.read_table",
+                   side_effect=lambda path: original(path).slice(1) if path == fold_2 else original(path)):
+            with duckdb.connect() as connection, self.assertRaisesRegex(PipelineError, "fold 2"):
+                verify_upstream(self.context, self.store, connection)
 
     def test_unconfirmed_unsupported_or_independent_versions_are_rejected(self):
         base=read_json(self.config)

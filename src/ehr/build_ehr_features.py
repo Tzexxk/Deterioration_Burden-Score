@@ -27,7 +27,7 @@ def load_settings(context, path):
             "INVALID_LAB_CONFIG", "Use the supported 24-hour laboratory audit policy")
     require(not {"audit_version", "cohort_version", "split_version", "dictionary_version"} & set(settings),
             "INVALID_LAB_CONFIG", "Data version identity is selected by the current v/r directory")
-    require("vital_audit" not in settings, "UNSUPPORTED_VITAL_AUDIT", "Vital-sign scope integration is not implemented")
+    require("vital_audit" not in settings, "UNSUPPORTED_VITAL_AUDIT", "Step10 accepts laboratory sources only")
     require(isinstance(settings["reviewer"], str) and settings["reviewer"].strip(),
             "INVALID_LAB_CONFIG", "Set the responsible reviewer")
     require(set(settings["tables"]) == {"d_labitems", "labevents", "admissions"},
@@ -54,12 +54,32 @@ def verify_upstream(context, store, connection):
     settings = split.validate_settings(record["settings"])
     require(record.get("data_run") == context.key and record.get("patient_split_frozen") is True
             and record.get("split_checks_passed") is True, "SPLIT_NOT_FROZEN", "A checked patient split is required")
-    patients = pq.read_table(context.layout.resolve(store.output_ref(manifest, "patient_split.parquet")))
-    reproduced, quotas = split.allocate_patients(inputs["cohort"], settings)
-    require(patients.equals(reproduced), "SPLIT_MISMATCH", "Patient assignments do not reproduce the frozen policy")
-    checks = split.check_assignments(inputs["cohort"], patients, settings, quotas)
-    split.check_source_leakage(connection, patients)
+    def published(name):
+        return context.layout.resolve(store.output_ref(manifest, name))
+
+    cohort = inputs["cohort"]
+    if settings["algorithm_version"] == split.CV_ALGORITHM:
+        require(record.get("split_method") == manifest["details"].get("split_method") == "five-fold",
+                "SPLIT_MISMATCH", "Published split method and policy disagree")
+        patients, quotas = split.allocate_grouped_cv(cohort, settings)
+        indices = quotas.pop("cross_validation")
+        require(read_json(published(split.CV_INDICES)) == indices,
+                "SPLIT_MISMATCH", "Published fold indices do not reproduce the frozen policy")
+        for fold in range(1, 6):
+            expected_fold = split.select_fold(patients, indices, fold)
+            actual_fold = pq.read_table(published(f"fold_{fold}/{split.TABLE_NAME}"))
+            require(actual_fold.equals(expected_fold),
+                    "SPLIT_MISMATCH", f"Published patient assignments differ for fold {fold}")
+            split.check_source_leakage(connection, actual_fold)
+    else:
+        patients = pq.read_table(published(split.TABLE_NAME))
+        reproduced, quotas = split.allocate_patients(cohort, settings)
+        require(patients.equals(reproduced), "SPLIT_MISMATCH", "Patient assignments do not reproduce the frozen policy")
+        split.check_source_leakage(connection, patients)
+    checks = split.check_assignments(cohort, patients, settings, quotas)
     checks["source_records_do_not_cross_splits"] = True
+    if settings["algorithm_version"] == split.CV_ALGORITHM:
+        checks["cross_validation_distribution"] = indices["distribution"]
     _, checks = split.split_reports(inputs["cohort"], patients, checks)
     require(checks == record["checks"], "SPLIT_MISMATCH", "Frozen split checks differ")
     return inputs["cohort"]
