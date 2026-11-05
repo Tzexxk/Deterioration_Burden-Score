@@ -6,15 +6,11 @@ import numpy as np
 
 from src.common.manifest import write_json
 from src.common.paths import require
-from src.models.ehr_data import checked_input_summary, load_package
 from src.models.experiments import (
-    completed_result,
-    experiment_store,
     read_batch,
-    run_model_batch,
 )
-from src.models.released_data import ReleasedData
 from src.models.train.ehr.catboost.protocol import validate_training_config
+from src.models.train.ehr.training import train_model
 
 
 def fit_fold(package, experiment, fold, folder):
@@ -51,32 +47,9 @@ def fit_fold(package, experiment, fold, folder):
     return {"fold": fold["fold"], "best_round": best_round, "tree_count": interface["tree_count"]}
 
 
-def publish_training(layout, config_path, experiment, package, input_summary):
-    key = experiment["id"]
-    store = experiment_store(layout, "train", "ehr", "catboost", key)
-    ref = store.manifest_ref("train", "run")
-    source = package.release.acceptance
-    existing = completed_result(store, ref, experiment, [{"manifest": source["self"], "generation": source["generation"]}])
-    if existing:
-        return existing
-    with store.publish("train", "run", inputs=[source["self"]], configs=[layout.ref("project", config_path)],
-                       details={"data_release": experiment["data_release"], "folds": len(package.cv["folds"])}) as work:
-        results = []
-        for fold in package.cv["folds"]:
-            print(f"{key} fold={fold['fold']}: fitting development split", flush=True)
-            results.append(fit_fold(package, experiment, fold, work / f"fold_{fold['fold']}"))
-        write_json(work / "input_summary.json", input_summary)
-        write_json(work / "effective_configuration.json", experiment)
-        write_json(work / "training_summary.json", {"id": key, "folds": results, "test_consumed_for_fitting": False})
-    return {"id": key, "status": "complete", "manifest": ref}
-
-
 def run_training(layout, config_path, selected=None):
     experiments = read_batch(layout, config_path, selected)
     for experiment in experiments:
         validate_training_config(experiment)
     require(version("catboost") == "1.2.10", "INVALID_CATBOOST_VERSION", "Use CatBoost 1.2.10 for this protocol")
-    package = load_package(ReleasedData.load(layout, experiments[0]["data_release"]))
-    input_summary = checked_input_summary(package)
-    return run_model_batch(layout, "train", "ehr", "catboost", experiments,
-                           lambda experiment: publish_training(layout, config_path, experiment, package, input_summary))
+    return train_model(layout, config_path, experiments, "catboost", fit_fold)

@@ -1,0 +1,31 @@
+{
+  "data_release": "v1_r3",
+  "defaults": {
+    "sensitivity_target": 0.8,
+    "specificity_target": 0.8,
+    "plot_training_history": false
+  },
+  "experiments": [
+    {
+      "id": "r01",
+      "description": "Ridge development assessment for r01",
+      "parameters": {
+        "train_id": "r01"
+      }
+    },
+    {
+      "id": "r02",
+      "description": "Ridge development assessment for r02",
+      "parameters": {
+        "train_id": "r02"
+      }
+    },
+    {
+      "id": "r03",
+      "description": "Ridge development assessment for r03",
+      "parameters": {
+        "train_id": "r03"
+      }
+    }
+  ]
+}
