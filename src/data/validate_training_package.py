@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pyarrow.parquet as pq
 
+from src.cohort import create_patient_split as split
 from src.cohort.burden_support import write_csv
 from src.cohort.raw_io import _file_version
 from src.common.manifest import ManifestStore, write_json
@@ -67,7 +68,7 @@ def verify_provenance(context, store):
     require(decision.get("version") == context.version and decision.get("run") == context.run
             and decision.get("checks_passed") is True and decision.get("horizon_hours") == 72
             and decision.get("horizon_frozen") is True and decision.get("label_rules_frozen") is True
-            and decision.get("review_policy") == "lenient", "INVALID_ENDPOINT", "Use a checked, frozen supported 72-hour endpoint")
+            and decision.get("review_policy") in {"lenient", "strict"}, "INVALID_ENDPOINT", "Use a checked, frozen supported 72-hour endpoint")
     for stage, phase, filename, identity, flags in [
         ("step08", "freeze", "cohort_freeze.json", "cohort_version", ["common_cohort_frozen", "cohort_checks_passed"]),
         ("step10", "freeze", "lab_dictionary_freeze.json", "dictionary_version", ["dictionary_frozen", "review_complete"]),
@@ -81,17 +82,28 @@ def verify_provenance(context, store):
     split_record = read_json(output("step09", "split", "split_freeze.json"))
     require(split_record.get("data_run") == context.key and split_record.get("patient_split_frozen") is True
             and split_record.get("split_checks_passed") is True
-            and split_record["settings"]["algorithm_version"] == "patient_stratified_pcg64_v1",
+            and split_record["settings"]["algorithm_version"] in split.SPLIT_METHODS.values(),
             "INVALID_FROZEN_SPLIT", "Use a supported, checked current-run patient split")
     dictionary = pq.read_table(output("step10", "freeze", "lab_dictionary.parquet"))
     require(set(dictionary["dictionary_version"].to_pylist()) == {context.key}, "DICTIONARY_VERSION_MISMATCH", "Dictionary belongs to a different data run")
     rules = checks.retained_rules(dictionary)
     package = output("step12", "export", "package/samples.parquet").parent
+    five_fold = split_record["settings"]["algorithm_version"] == split.CV_ALGORITHM
+    split_manifest = manifests[("step09", "split")]
+    require(not five_fold or split_record.get("split_method") == split_manifest["details"].get("split_method") == "five-fold",
+            "INVALID_FROZEN_SPLIT", "Published fold policy is inconsistent")
+    cv_files = {}
+    if five_fold:
+        cv_files[split.CV_INDICES] = output("step09", "split", split.CV_INDICES)
+        for fold in range(1, 6):
+            name = f"fold_{fold}/{split.TABLE_NAME}"
+            cv_files[f"splits/{name}"] = output("step09", "split", name)
+    primary_split = cv_files["splits/fold_1/patient_split.parquet"] if five_fold else output("step09", "split", split.TABLE_NAME)
     result = {"manifests": manifests, "export_manifest": root, "export": export, "package": package,
               "archive": output("step12", "export", "training_package.zip"), "decision": decision,
               "cohort": pq.read_table(output("step08", "freeze", "cohort.parquet")),
               "evidence": pq.read_table(output("step08", "freeze", "cohort_audit.parquet")),
-              "split": pq.read_table(output("step09", "split", "patient_split.parquet")), "split_settings": split_record["settings"],
+              "split": pq.read_table(primary_split), "split_settings": split_record["settings"], "cv_files": cv_files,
               "samples": pq.read_table(package / "samples.parquet"), "ehr": pq.read_table(package / "ehr_features.parquet"),
               "schema": read_json(package / "feature_schema.json"), "rules": rules,
               "images": pq.read_table(output("step12", "export", "image_manifest.parquet")),
@@ -119,18 +131,46 @@ def verify_provenance(context, store):
     return result
 
 
+def validate_sample_splits(source, settings):
+    cv_files = source.get("cv_files", {})
+    samples, cohort, primary = (source[k] for k in ("samples", "cohort", "split"))
+    if not cv_files:
+        return checks.validate_samples(samples, cohort, primary, settings)
+
+    for name, path in cv_files.items():
+        checks.require((source["package"] / name).read_bytes() == path.read_bytes(), "Packaged fold artifact differs from Step09")
+    bundle = read_json(cv_files[split.CV_INDICES])
+    split.validate_cv_indices(cohort, bundle, primary)
+    checks.require(bundle["split_version"] == bundle["cohort_version"], "Index data version changed")
+    checks.require(samples["sample_id"].to_pylist() == [row["sample_id"] for row in bundle["master"]],
+                   "Packaged samples differ from the study index order")
+    folds = []
+    for fold, column in zip(bundle["folds"], checks.FOLD_SPLIT_COLUMNS, strict=True):
+        name = f"splits/fold_{fold['fold']}/{split.TABLE_NAME}"
+        folds.append(pq.read_table(cv_files[name]))
+        roles = samples[column].to_pylist()
+        for role, indices in (("train", fold["train_indices"]), ("validation", fold["validation_indices"]),
+                              ("test", bundle["test_indices"])):
+            checks.require([i for i, value in enumerate(roles) if value == role] == indices,
+                           f"Sample roles differ from Step09 indices for fold {fold['fold']}")
+    return {**checks.validate_samples(samples, cohort, primary, settings, folds=folds),
+            "folds_checked": len(folds), "fixed_test_studies": len(bundle["test_indices"])}
+
+
 def validate_images(context, store, source):
     original, images, quality = (checks.indexed(table, "sample_id") for table in (source["cohort"], source["images"], source["qc"]))
     samples = source["samples"].to_pylist()
     checks.require(set(images) == {row["sample_id"] for row in samples}, "Image manifest coverage mismatch")
     prior = source["manifests"][("step07", "prepare")]
+    split_columns = checks.FOLD_SPLIT_COLUMNS if source.get("cv_files") else ("split",)
     fields = "subject_id hadm_id study_id dicom_id t0 npy_relpath processing_version qc_status view_position".split()
     for row in samples:
         key = row["sample_id"]
         base, image, qc = original[key], images[key], quality[key]
         checks.require(qc["qc_status"] == "pass" and qc["processing_status"] == "complete", "Image QC not accepted")
         checks.require(all(base[name] == image[name] == qc[name] for name in fields), "Image identity or processing changed")
-        checks.require(image["split"] == row["split"] and image["npy_relpath"] == row["image_relpath"], "Image assignment changed")
+        checks.require(all(image[column] == row[column] for column in split_columns)
+                       and image["npy_relpath"] == row["image_relpath"], "Image assignment changed")
         ref = store.output_ref(prior, row["image_relpath"])
         checks.require({"root": image["npy_root"], "path": image["npy_path"]} == ref, "Image source reference changed")
         checks.require(image["dicom_root"] == "mimic_cxr" and image["dicom_path"] == base["dicom_path"] == qc["dicom_path"], "DICOM reference changed")
@@ -153,8 +193,18 @@ def validate_metadata(context, source, settings):
                    and metadata["ehr_lookback_hours"] == 24 and metadata["target_column"] == "burden_score"
                    and metadata["target_range"] == [0, 8] and metadata["target_formula"] == source["decision"]["target_formula"]
                    and metadata["outcome_version"] == source["decision"]["outcome_version"]
-                   and metadata["split_column"] == "split" and metadata["split_values"] == list(checks.SPLITS)
+                   and metadata["split_values"] == list(checks.SPLITS)
                    and metadata["split_unit"] == "subject_id", "Metadata task contract changed")
+    cv_files = source.get("cv_files", {})
+    if cv_files:
+        checks.require("split_column" not in metadata and metadata.get("split_columns") == list(checks.FOLD_SPLIT_COLUMNS)
+                       and metadata.get("cross_validation") == {
+                           "indices_file": split.CV_INDICES, "n_folds": 5, "split_column_semantics": "per_fold",
+                           "patient_split_files": sorted(name for name in cv_files if name != split.CV_INDICES),
+                       }, "Five-fold metadata contract changed")
+    else:
+        checks.require(metadata.get("split_column") == "split" and "split_columns" not in metadata
+                       and "cross_validation" not in metadata, "Holdout metadata contract changed")
     checks.require(metadata["hypoxemia_source"] == "MIMIC-IV ICU chartevents only"
                    and metadata["live_discharge_rule"] == "Retain events in (t0, dischtime] when alive discharge precedes t0+H; absent recorded events are operational zeros.",
                    "Metadata source or discharge rule changed")
@@ -164,7 +214,7 @@ def validate_metadata(context, source, settings):
     checks.require(metadata["feature_counts"] == {"numeric":len(source["schema"]["numeric_features"]), "categorical":len(source["schema"]["categorical_features"])}
                    and metadata["ehr_preprocessing_applied"] is False and metadata["independent_validation_completed"] is False,
                    "Historical export state or feature counts changed")
-    expected = PACKAGE_FILES | {row["image_relpath"] for row in source["samples"].to_pylist()}
+    expected = PACKAGE_FILES | set(source.get("cv_files", {})) | set(source["samples"]["image_relpath"].to_pylist())
     actual = {path.relative_to(package).as_posix() for path in package.rglob("*") if path.is_file()}
     checks.require(actual == expected and metadata["files"] == sorted(expected), "Package inventory changed")
     checks.require(source["export"]["studies"] == source["samples"].num_rows == source["export"]["images"]
@@ -176,14 +226,14 @@ def validate_metadata(context, source, settings):
         reader = csv.DictReader(stream)
         checks.require(reader.fieldnames == ["split", "metric", "value", "unit", "denominator"], "Summary columns changed")
         checks.require(list(reader) == [{name:str(value) for name,value in row.items()} for row in summaries], "Summary values changed")
-    counts = {group:{row["metric"]:row["value"] for row in summaries if row["split"] == group and row["metric"] in {"studies", "admissions", "patients"}} for group in ("all", *checks.SPLITS)}
+    counts = {group:{row["metric"]:row["value"] for row in summaries if row["split"] == group and row["metric"] in {"studies", "admissions", "patients"}} for group in dict.fromkeys(row["split"] for row in summaries)}
     checks.require(metadata["split_counts"] == source["export"]["split_counts"] == counts, "Population counts changed")
     return {"summary_rows_checked": len(summaries)}
 
 
 def relocate_archive(source, workspace):
     package = source["package"]
-    expected = PACKAGE_FILES | {row["image_relpath"] for row in source["samples"].to_pylist()}
+    expected = PACKAGE_FILES | set(source.get("cv_files", {})) | set(source["samples"]["image_relpath"].to_pylist())
     with zipfile.ZipFile(source["archive"]) as archive:
         infos = archive.infolist()
         names = {f"package/{name}": name for name in expected}
@@ -268,7 +318,7 @@ def run_validation(context, config_path="export/validation.json"):
             source["watched"][config_file] = config_version
             return {"completed_steps":list(range(1,13)), "step11_audit_and_build":True}
         if check("provenance", provenance):
-            check("samples", lambda:checks.validate_samples(source["samples"], source["cohort"], source["split"], settings))
+            check("samples", lambda:validate_sample_splits(source, settings))
             if check("ehr_contract", lambda:checks.validate_ehr_contract(source["ehr"], source["samples"], source["schema"], source["rules"])):
                 check("laboratory_reconstruction", lambda:checks.reconstruct_labs(source["labs"], source["lab_admissions"], source["cohort"], source["rules"], source["ehr"]))
                 check("static_reconstruction", lambda:checks.reconstruct_static(source["cohort"], source["evidence"], source["static"]["patients"], source["static"]["admissions"], source["static"]["services"], source["ehr"]))

@@ -16,6 +16,7 @@ from src.common.config import DataContext
 from src.common.manifest import ManifestStore, write_json
 from src.common.paths import Layout, PipelineError, read_json
 from src.data import acceptance_checks as step
+from src.data import package_contract as contract
 from src.data import validate_training_package as pipeline
 from tests.common import test_foundation as foundation
 
@@ -274,6 +275,18 @@ class AcceptanceTests(unittest.TestCase):
                 self.split,
                 self.settings,
             )
+
+    def test_secondary_fold_assignment_must_match_its_patient_table(self):
+        rotated = self.split.set_column(1, "split", pa.array(["validation", "train", "test"]))
+        remaining = self.split.set_column(1, "split", pa.array(["train", "train", "test"]))
+        folds = [self.split, rotated, remaining, remaining, remaining]
+        samples = contract.build_samples(self.cohort, self.split, fold_patients=folds)
+        self.assertEqual(step.validate_samples(samples, self.cohort, self.split, self.settings, folds=folds),
+                         self.settings["expected_counts"])
+        column = "split_fold_2"
+        wrong = samples.set_column(samples.schema.get_field_index(column), column, self.samples["split"])
+        with self.assertRaisesRegex(ValueError, "Patient split changed"):
+            step.validate_samples(wrong, self.cohort, self.split, self.settings, folds=folds)
 
     def test_changed_split_key_and_types(self):
         for field, value in [

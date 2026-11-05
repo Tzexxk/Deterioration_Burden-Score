@@ -11,6 +11,8 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from src.data.package_contract import CV_SAMPLE_SCHEMA, FOLD_SPLIT_COLUMNS
+
 EVENTS = (
     "new_icu_ccu_transfer",
     "new_stepdown_transfer",
@@ -111,16 +113,19 @@ def indexed(table, key):
     return result
 
 
-def validate_samples(samples, cohort, split, settings):
+def validate_samples(samples, cohort, split, settings, *, folds=None):
+    columns = ("split",) if folds is None else FOLD_SPLIT_COLUMNS
+    tables = [split] if folds is None else folds
+    require(len(tables) == len(columns), "Invalid fold table count")
     require(
-        samples.schema == SAMPLE_SCHEMA
+        samples.schema == (SAMPLE_SCHEMA if folds is None else CV_SAMPLE_SCHEMA)
         and samples.num_rows > 0
         and all(not c.null_count for c in samples.columns),
         "Invalid sample types or nulls",
     )
     rows = indexed(samples, "sample_id")
     original = indexed(cohort, "sample_id")
-    assignments = indexed(split, "subject_id")
+    assignments = [indexed(table, "subject_id") for table in tables]
     require(set(rows) == set(original), "Common cohort sample keys changed")
     require(
         len({r["study_id"] for r in rows.values()}) == len(rows)
@@ -128,7 +133,7 @@ def validate_samples(samples, cohort, split, settings):
         "Study or image key is not unique",
     )
     require(
-        set(assignments) == {r["subject_id"] for r in rows.values()},
+        all(set(mapping) == {r["subject_id"] for r in rows.values()} for mapping in assignments),
         "Patient coverage changed",
     )
     for key, row in rows.items():
@@ -139,7 +144,8 @@ def validate_samples(samples, cohort, split, settings):
             "Invalid sample identity",
         )
         require(
-            row["split"] in SPLITS and row["split"] == assignments[ids[0]]["split"],
+            all(row[column] in SPLITS and row[column] == mapping[ids[0]]["split"]
+                for column, mapping in zip(columns, assignments, strict=True)),
             "Patient split changed",
         )
         expected_path = f"images/p{str(ids[0])[:2]}/p{ids[0]}/s{ids[2]}.npy"
@@ -195,11 +201,11 @@ def validate_samples(samples, cohort, split, settings):
     counts = {
         "studies": len(rows),
         "admissions": len({r["hadm_id"] for r in rows.values()}),
-        "patients": len(assignments),
+        "patients": len(assignments[0]),
     }
     require(counts == settings["expected_counts"], "Frozen cohort counts changed")
     for group in SPLITS:
-        part = [r for r in rows.values() if r["split"] == group]
+        part = [r for r in rows.values() if r[columns[0]] == group]
         require(
             len(part) == settings["expected_split_studies"][group]
             and len({r["subject_id"] for r in part})
@@ -572,8 +578,16 @@ def validate_pixels(path):
 
 def expected_summary(samples):
     result = []
-    for group in ("all", *SPLITS):
-        rows = [r for r in samples.to_pylist() if group == "all" or r["split"] == group]
+    if samples.schema == CV_SAMPLE_SCHEMA:
+        groups = [("test", FOLD_SPLIT_COLUMNS[0], "test")]
+        groups.extend((f"fold_{i}_{role}", column, role)
+                      for i, column in enumerate(FOLD_SPLIT_COLUMNS, 1)
+                      for role in ("train", "validation"))
+    else:
+        groups = [(role, "split", role) for role in SPLITS]
+    records = samples.to_pylist()
+    for group, column, role in [("all", None, None), *groups]:
+        rows = [r for r in records if column is None or r[column] == role]
         patients = {r["subject_id"] for r in rows}
 
         def add(name, count, unit, denominator):
