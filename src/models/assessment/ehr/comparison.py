@@ -96,7 +96,7 @@ def regression_metrics(labels, scores, weights):
     return {"rmse": np.sqrt(ratio(weights @ (error ** 2), count)), "mae": ratio(weights @ np.abs(error), count)}
 
 
-def calculate_comparison(rows, scores, points, draws, seed, *, progress=None):
+def calculate_comparison(rows, scores, points, draws, seed, *, progress=None, fixed_test=False):
     if progress:
         progress(f"Bootstrap ({draws:,} draws): 0/{len(scores)}")
     weights = np.vstack([np.ones(len(rows)), patient_weights(rows.subject_id.to_numpy(), draws, seed)])
@@ -126,19 +126,22 @@ def calculate_comparison(rows, scores, points, draws, seed, *, progress=None):
                         "OPERATING_POINT_MISMATCH", f"Invalid frozen threshold: {name}/{endpoint}/{rule}")
                 estimates, counts = threshold_metrics(labels, fixed_alerts(labels, values, threshold), weights)
                 calculated = {key: interval(v[0], v[1:]) for key, v in estimates.items()}
-                require({key: int(v[0]) for key, v in counts.items()} == point["confusion_matrix"]
+                matrix = {key: int(v[0]) for key, v in counts.items()}
+                require(matrix == point["confusion_matrix"]
                         and {key: v["point"] for key, v in calculated.items()} == point["metrics"]
-                        and calculated[rule]["point"] >= point["target"],
+                        and (fixed_test or calculated[rule]["point"] >= point["target"]),
                         "OPERATING_POINT_MISMATCH", f"Frozen operating point disagrees with predictions: {name}/{endpoint}/{rule}")
                 results[endpoint] = {"target": point["target"], "threshold": threshold,
                                      "comparison": point["comparison"], "metrics": calculated}
+                if fixed_test:
+                    results[endpoint]["confusion_matrix"] = matrix
             based[rule][name] = results
         if progress:
             progress(f"Bootstrap ({draws:,} draws): {index}/{len(scores)} ({name})")
     return free, based, targets_by_rule
 
 
-def write_comparison(work, rows, free, based, targets, snapshot, *, progress=None):
+def write_comparison(work, rows, free, based, targets, snapshot, *, progress=None, cohort="OOF"):
     write_json(work / "effective_configuration.json", snapshot)
     write_json(work / "summary.json", {"studies": len(rows), "patients": int(rows.subject_id.nunique()),
                                       "positive_studies": {k: int(rows[k].sum()) for k in ENDPOINTS},
@@ -149,7 +152,7 @@ def write_comparison(work, rows, free, based, targets, snapshot, *, progress=Non
     metrics = [("rmse_relative_pct", "RMSE difference (%)"), ("mae_relative_pct", "MAE difference (%)")]
     metrics.extend((f"{endpoint}_{name}", f"{endpoint} {name.upper()}")
                    for endpoint in ENDPOINTS for name in ("auroc", "ap"))
-    plots = [(destination, free, metrics, "Threshold-free OOF")]
+    plots = [(destination, free, metrics, f"Threshold-free {cohort}")]
     for rule, result in based.items():
         target = targets[rule]
         destination = work / "threshold_based" / rule_folder(rule, target)
@@ -159,7 +162,7 @@ def write_comparison(work, rows, free, based, targets, snapshot, *, progress=Non
                            for ep, value in endpoints.items() for name in selected}
                      for key, endpoints in result.items()}
         panels = [(f"{ep}_{name}", f"{ep} {name.upper()}") for ep in ENDPOINTS for name in selected]
-        plots.append((destination, flattened, panels, f"OOF: {rule} ≥ {target:.0%}"))
+        plots.append((destination, flattened, panels, f"{cohort}: {rule} target {target:.0%}"))
 
     total = sum(len(metrics) for _, _, metrics, _ in plots)
     index = 0

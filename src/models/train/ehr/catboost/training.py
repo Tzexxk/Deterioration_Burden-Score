@@ -13,17 +13,26 @@ from src.models.train.ehr.catboost.protocol import validate_training_config
 from src.models.train.ehr.training import train_model
 
 
+def create_model(config, categorical, *, rounds=None):
+    from catboost import CatBoostRegressor
+
+    policy = config["model"]
+    candidate = config["candidate"]
+    parameters = {k: v for k, v in policy.items() if k not in ("family", "use_best_model", "early_stopping_rounds")}
+    parameters.update(depth=candidate["depth"], l2_leaf_reg=candidate["l2_leaf_reg"],
+                      random_seed=config["seed"], cat_features=categorical)
+    if rounds is not None:
+        parameters["iterations"] = rounds
+    return CatBoostRegressor(**parameters)
+
+
 def fit_fold(package, experiment, fold, folder):
     from catboost import CatBoostRegressor
 
     config = experiment["parameters"]
     policy = config["model"]
-    candidate = config["candidate"]
     categorical = package.schema["categorical_features"]
-    parameters = {k: v for k, v in policy.items() if k not in ("family", "use_best_model", "early_stopping_rounds")}
-    parameters.update(depth=candidate["depth"], l2_leaf_reg=candidate["l2_leaf_reg"],
-                      random_seed=config["seed"], cat_features=categorical)
-    model = CatBoostRegressor(**parameters)
+    model = create_model(config, categorical)
     train, validation = fold["train_indices"], fold["validation_indices"]
     x, y = package.features, package.samples.burden_score
     model.fit(x.iloc[train], y.iloc[train].to_numpy(float),

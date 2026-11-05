@@ -34,14 +34,14 @@ class CatBoostTrainingTests(unittest.TestCase):
         self.layout = Layout(root)
         self.store = ManifestStore(self.layout, data=DataContext(self.layout, 1, 3))
 
-    def publish(self, *, wrong_role=False, wrong_acceptance=False):
+    def publish(self, *, wrong_role=False, wrong_acceptance=False, different_test_mean=False):
         version = "v1_r2"
         schema = schema_for([], version)
         rows, indexed = [], []
         t0 = datetime(2020, 1, 1)
         for i in range(12):
             group = i // 2
-            flags = [0, 0, 0, 0, 0, i % 2]
+            flags = [int(different_test_mean and i == 0), 0, 0, 0, 0, i % 2]
             row = dict(sample_id=f"sample-{i:02d}", subject_id=i, hadm_id=i, study_id=i, dicom_id=f"dicom-{i}",
                        image_relpath=f"images/{i}.npy", t0=t0, observation_end=t0 + timedelta(hours=72),
                        observed_hours=72.0, early_discharge=0, **dict(zip(COMPONENTS, flags, strict=True)), **score(flags))

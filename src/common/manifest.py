@@ -99,7 +99,7 @@ class ManifestStore:
 
     @staticmethod
     def _flat_comparison(scope):
-        return scope.get("model_stage") == "assessment" and scope.get("model") == "comparison"
+        return scope.get("model_stage") in ("assessment", "test") and scope.get("model") == "comparison"
 
     @staticmethod
     def _control_directory(prefix, flat):

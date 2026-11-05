@@ -25,10 +25,15 @@ def fixed_alerts(labels, scores, threshold):
     return scores >= threshold if threshold is not None else np.zeros_like(labels)
 
 
+def measure_operating_point(labels, scores, point):
+    alerts = fixed_alerts(labels, scores, point["threshold"])
+    metrics, counts = threshold_metrics(labels, alerts, np.ones((1, len(labels))))
+    return {**point, "confusion_matrix": {k: int(v[0]) for k, v in counts.items()},
+            "metrics": {k: float(v[0]) if np.isfinite(v[0]) else None for k, v in metrics.items()}}
+
+
 def operating_point(labels, scores, rule, target):
     threshold = choose_threshold(labels, scores, rule, target)
-    alerts = fixed_alerts(labels, scores, threshold)
-    metrics, counts = threshold_metrics(labels, alerts, np.ones((1, len(labels))))
-    return {"target": target, "threshold": threshold, "comparison": "score >= threshold" if threshold is not None else "no_alerts",
-            "confusion_matrix": {k: int(v[0]) for k, v in counts.items()},
-            "metrics": {k: float(v[0]) if np.isfinite(v[0]) else None for k, v in metrics.items()}}
+    point = {"target": target, "threshold": threshold,
+             "comparison": "score >= threshold" if threshold is not None else "no_alerts"}
+    return measure_operating_point(labels, scores, point)
