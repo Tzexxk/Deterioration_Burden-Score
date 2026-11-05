@@ -141,6 +141,32 @@ class RawAuditTests(unittest.TestCase):
             self.assertNotIn("sha256", text.lower())
         self.assertFalse(any(self.output.parent.rglob("temp")))
 
+    def test_run_two_uses_own_defaults_and_preserves_first_run(self):
+        run_audit(self.context)
+        before = {path:path.read_bytes() for path in self.output.iterdir() if path.is_file()}
+        for group in ("imaging", "ehr"):
+            value = json.loads((PROJECT / f"configs/data.template/v1_r2/{group}/raw_audit.json").read_text(encoding="utf-8"))
+            if group == "imaging":
+                value["raw_audit"].update(dicom_workers=1, dicom_batch_size=2)
+            else:
+                value["raw_audit"]["lab_sample_rows"] = 1
+            write_json(self.root / f"configs/data/v1_r2/{group}/raw_audit.json", value)
+        write_json(self.root / "configs/version_run.json", {"version":1,"run":2})
+        selected = DataContext.load(self.layout, 1, 2)
+        self.assertEqual(run_audit(selected), 0)
+        store = ManifestStore(self.layout, data=selected)
+        manifest = store.validate(store.manifest_ref("step01", "audit"))
+        self.assertEqual(manifest["generation"], 1)
+        summary = json.loads(self.layout.resolve(store.output_ref(manifest, "audit_summary.json")).read_text(encoding="utf-8"))
+        self.assertEqual(summary["data_run"], {"version":1,"run":2})
+        with self.layout.resolve(store.output_ref(manifest, "ehr_time_field_screen.csv")).open(encoding="utf-8", newline="") as stream:
+            metrics = {row["metric"]:row for row in csv.DictReader(stream)}
+        self.assertEqual(metrics["sample_rows"]["count"], "1")
+        self.assertTrue(all(path.read_bytes() == contents for path,contents in before.items()))
+        (self.root / "configs/data/v1_r2/ehr/raw_audit.json").unlink()
+        self.error("MISSING_FILE", lambda:run_audit(selected))
+        self.assertTrue(all(path.read_bytes() == contents for path,contents in before.items()))
+
     def test_failed_rerun_preserves_complete_files_and_saves_diagnostic(self):
         run_audit(self.context)
         original = self.layout.resolve(self.ref).read_bytes()
