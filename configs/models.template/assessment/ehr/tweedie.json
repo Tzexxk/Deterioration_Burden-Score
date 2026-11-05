@@ -1,0 +1,31 @@
+{
+  "data_release": "v1_r3",
+  "defaults": {
+    "sensitivity_target": 0.8,
+    "specificity_target": 0.8,
+    "plot_training_history": false
+  },
+  "experiments": [
+    {
+      "id": "w01",
+      "description": "Tweedie development assessment for w01",
+      "parameters": {
+        "train_id": "w01"
+      }
+    },
+    {
+      "id": "w02",
+      "description": "Tweedie development assessment for w02",
+      "parameters": {
+        "train_id": "w02"
+      }
+    },
+    {
+      "id": "w03",
+      "description": "Tweedie development assessment for w03",
+      "parameters": {
+        "train_id": "w03"
+      }
+    }
+  ]
+}

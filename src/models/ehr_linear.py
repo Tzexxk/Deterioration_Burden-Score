@@ -18,8 +18,15 @@ def predict_checkpoint(checkpoint, features):
     intercept = checkpoint["intercept"]
     require(coefficients.shape == (values.shape[1],) and np.isfinite(coefficients).all() and np.isfinite(intercept),
             "INVALID_CHECKPOINT", "Invalid linear coefficients or intercept")
+    link = checkpoint.get("link", "identity")
+    require(link in ("identity", "log"), "INVALID_CHECKPOINT", "Unsupported checkpoint link")
     with threadpool_limits(limits=1):
-        return values @ coefficients + intercept
+        prediction = values @ coefficients + intercept
+    with np.errstate(over="ignore"):
+        if link == "log":
+            prediction = np.exp(prediction)
+    require(np.isfinite(prediction).all(), "INVALID_CHECKPOINT", "Checkpoint predictions must be finite")
+    return prediction
 
 
 def fit_linear_fold(package, experiment, fold, folder, estimator):
@@ -38,7 +45,10 @@ def fit_linear_fold(package, experiment, fold, folder, estimator):
         expected = model.predict(transform_features(x_validation, state))
     folder.mkdir()
     path = folder / "model.json"
-    write_json(path, {"preprocessing": state, "coefficients": model.coef_.tolist(), "intercept": float(model.intercept_)})
+    checkpoint = {"preprocessing": state, "coefficients": model.coef_.tolist(), "intercept": float(model.intercept_)}
+    if "link" in settings:
+        checkpoint["link"] = settings["link"]
+    write_json(path, checkpoint)
     np.testing.assert_allclose(predict_checkpoint(read_json(path), x_validation), expected, rtol=0, atol=1e-12)
     write_json(folder / "interface.json", {"fold": fold["fold"], "parameters": settings,
                "features": list(package.features.columns), "scikit_learn_version": version("scikit-learn"),
@@ -60,5 +70,6 @@ def checkpoint_prediction(store, manifest, package, fold):
             and interface["validation_sample_ids"] == package.samples.iloc[validation].sample_id.tolist(),
             "INVALID_CHECKPOINT", "Linear checkpoint feature, version or fold identity differs")
     checkpoint = read_json(output("model.json"))
+    require(checkpoint.get("link", "identity") == interface["parameters"].get("link", "identity"),
+            "INVALID_CHECKPOINT", "Checkpoint link differs from its training interface")
     return predict_checkpoint(checkpoint, package.features.iloc[validation]), None
-
