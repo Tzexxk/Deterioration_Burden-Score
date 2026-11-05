@@ -34,7 +34,6 @@ class PixelIssue(ValueError):
 
 def validate_settings(settings: dict) -> None:
     expected = {
-        "size": 224,
         "percentiles": [1, 99],
         "percentile_method": "linear",
         "interpolation": "bilinear",
@@ -42,6 +41,8 @@ def validate_settings(settings: dict) -> None:
         "padding_value": 0,
         "rounding": "half_up",
     }
+    if type(settings.get("size")) is not int or settings["size"] not in (224, 1024):
+        raise ValueError("Image size must be 224 or 1024")
     if any(
         settings.get(k) != v or type(settings.get(k)) is not type(v)
         for k, v in expected.items()
@@ -443,5 +444,5 @@ def validate_pixels(pixels: np.ndarray, size: int = 224) -> None:
         or pixels.max() > 1
     ):
         raise ValueError(
-            "Invalid prepared image: expected finite float32 [224,224] in [0,1]"
+            f"Invalid prepared image: expected finite float32 [{size},{size}] in [0,1]"
         )

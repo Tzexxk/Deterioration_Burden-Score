@@ -1,6 +1,7 @@
 """Image provenance, review iteration, variable outputs and recovery."""
 
 import csv
+import shutil
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -11,10 +12,14 @@ import pyarrow.parquet as pq
 
 from src.cohort.build_labels import build_burden_labels
 from src.cohort.burden_io import clinical_time
+from src.cohort.freeze_cohort import freeze_common_cohort
 from src.cohort.freeze_endpoint import freeze_endpoint
-from src.common.manifest import write_json
+from src.common.config import DataContext
+from src.common.manifest import ManifestStore, write_json
 from src.common.paths import PipelineError, read_json
 from src.imaging.prepare_images import REVIEW_COLUMNS, prepare_images
+from src.utils import master_reuse
+from src.utils.copy_data_artifacts import copy_data_artifacts
 from tests.cohort import test_burden_pipeline as pipeline
 from tests.cohort.test_image_transform import dicom
 
@@ -100,6 +105,54 @@ class ImagePreparationTests(unittest.TestCase):
         status = pq.read_table(self.output("image_qc_status.parquet"))
         self.assertEqual(set(status["qc_status"].to_pylist()), {"pass"})
         self.assertFalse(any("sha256" in name for name in status.schema.names))
+
+    def test_master_uses_copied_parent_and_rebuilds_cohort(self):
+        prepare_images(self.context)
+        self.review_all()
+        prepare_images(self.context)
+        freeze_common_cohort(self.context)
+        cohort_ref = self.store.manifest_ref("step08", "freeze")
+        index_name = "package/cross_validation_indices.json"
+        export = self.store.manifest_ref("step12", "export")
+        with self.store.publish("step12", "export", inputs=[cohort_ref], data_files=[index_name]) as work:
+            write_json(work / index_name, {"index_base": 0})
+        with self.store.publish("step13", "validate", inputs=[export], details={"checks_passed": True}) as work:
+            write_json(work / "acceptance.json", {"accepted": True})
+        self.store.freeze(self.store.manifest_ref("step13", "validate"))
+
+        root = self.context.layout.project
+        shutil.copytree(root / self.context.directory / "imaging", root / "configs/data/v1_r2/imaging")
+        settings_path = root / "configs/data/v1_r2/imaging/processing.json"
+        write_json(settings_path, {**read_json(settings_path), "size": 1024,
+                                   "processing_version": "master", "parent_run": 1})
+        write_json(root / "configs/version_run.json", {"version": 1, "run": 2})
+        target = DataContext.load(self.context.layout, 1, 2)
+        target_store = ManifestStore(target.layout, data=target)
+        template = read_json(PROJECT / "configs/utils.template/reuse_master_inputs.json")
+        items = [x for x in template["items"] if x["source"]["stage"] in {"step02", "step03", "step06", "step07", "step08"}]
+        items += [x for x in template["items"] if x["source"]["name"] == index_name]
+        copy_config = "configs/utils/reuse.json"
+        write_json(root / copy_config, {**template, "source_run": 1, "items": items})
+        copy_data_artifacts(target, copy_config)
+        reuse = master_reuse.reuse_manifest(target, target_store, 1)
+        indices = master_reuse.copied(target_store, reuse, "cross_validation_indices.json", "step12",
+                                      "export", index_name, source_root="processed")
+        self.assertEqual(read_json(indices), {"index_base": 0})
+        prepare_images(target)
+        freeze_common_cohort(target)
+        image = target_store.validate(target_store.manifest_ref("step07", "prepare"))
+        cohort = target_store.validate(target_store.manifest_ref("step08", "freeze"))
+        self.assertEqual(cohort["details"]["parent_run"], 1)
+        self.assertEqual(cohort["details"]["counts"]["studies"], 3)
+        name = "images/p1/p1/s100.npy"
+        pixels = np.load(target.layout.resolve(target_store.output_ref(image, name)), allow_pickle=False)
+        self.assertEqual(pixels.shape, (1024, 1024))
+        self.assertEqual(np.load(self.output(name), allow_pickle=False).shape, (224, 224))
+        old = self.store.validate(cohort_ref)
+        new_table = pq.read_table(target.layout.resolve(target_store.output_ref(cohort, "cohort.parquet")))
+        old_table = pq.read_table(target.layout.resolve(self.store.output_ref(old, "cohort.parquet")))
+        self.assertTrue(new_table.select(["sample_id", "burden_score"]).equals(old_table.select(["sample_id", "burden_score"])))
+        self.assertEqual(set(new_table["processing_version"].to_pylist()), {"master"})
 
     def test_missing_source_can_be_acknowledged_but_not_manually_passed(self):
         self.dicoms[0].unlink()

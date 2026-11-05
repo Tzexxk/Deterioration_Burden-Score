@@ -1,0 +1,295 @@
+{
+  "source_run": 2,
+  "target": {
+    "stage": "step06",
+    "phase": "reuse"
+  },
+  "items": [
+    {
+      "source": {
+        "stage": "step02",
+        "phase": "build",
+        "name": "cxr_index.parquet"
+      },
+      "target": {
+        "name": "cxr_index.parquet",
+        "root": "processed"
+      }
+    },
+    {
+      "source": {
+        "stage": "step03",
+        "phase": "select",
+        "name": "study_image_selection.parquet"
+      },
+      "target": {
+        "name": "study_image_selection.parquet",
+        "root": "processed"
+      }
+    },
+    {
+      "source": {
+        "stage": "step06",
+        "phase": "build",
+        "name": "study_burden_labels.parquet"
+      },
+      "target": {
+        "name": "study_burden_labels.parquet",
+        "root": "processed"
+      }
+    },
+    {
+      "source": {
+        "stage": "step06",
+        "phase": "build",
+        "name": "run_metadata.json"
+      },
+      "target": {
+        "name": "labels_metadata.json",
+        "root": "outputs"
+      }
+    },
+    {
+      "source": {
+        "stage": "step07",
+        "phase": "prepare",
+        "name": "image_qc_status.parquet"
+      },
+      "target": {
+        "name": "image_qc_status.parquet",
+        "root": "processed"
+      }
+    },
+    {
+      "source": {
+        "stage": "step07",
+        "phase": "prepare",
+        "name": "effective_configuration.json"
+      },
+      "target": {
+        "name": "parent_image_settings.json",
+        "root": "outputs"
+      }
+    },
+    {
+      "source": {
+        "stage": "step08",
+        "phase": "freeze",
+        "name": "cohort.parquet"
+      },
+      "target": {
+        "name": "cohort.parquet",
+        "root": "processed"
+      }
+    },
+    {
+      "source": {
+        "stage": "step08",
+        "phase": "freeze",
+        "name": "cohort_audit.parquet"
+      },
+      "target": {
+        "name": "cohort_audit.parquet",
+        "root": "processed"
+      }
+    },
+    {
+      "source": {
+        "stage": "step12",
+        "phase": "export",
+        "name": "package/samples.parquet"
+      },
+      "target": {
+        "name": "samples.parquet",
+        "root": "processed"
+      }
+    },
+    {
+      "source": {
+        "stage": "step12",
+        "phase": "export",
+        "name": "package/ehr_features.parquet"
+      },
+      "target": {
+        "name": "ehr_features.parquet",
+        "root": "processed"
+      }
+    },
+    {
+      "source": {
+        "stage": "step12",
+        "phase": "export",
+        "name": "package/feature_schema.json"
+      },
+      "target": {
+        "name": "feature_schema.json",
+        "root": "outputs"
+      }
+    },
+    {
+      "source": {
+        "stage": "step12",
+        "phase": "export",
+        "name": "package/dataset_metadata.json"
+      },
+      "target": {
+        "name": "dataset_metadata.json",
+        "root": "outputs"
+      }
+    },
+    {
+      "source": {
+        "stage": "step12",
+        "phase": "export",
+        "name": "package/cross_validation_indices.json"
+      },
+      "target": {
+        "name": "cross_validation_indices.json",
+        "root": "outputs"
+      }
+    },
+    {
+      "source": {
+        "stage": "step12",
+        "phase": "export",
+        "name": "package/splits/fold_1/patient_split.parquet"
+      },
+      "target": {
+        "name": "splits/fold_1/patient_split.parquet",
+        "root": "processed"
+      }
+    },
+    {
+      "source": {
+        "stage": "step12",
+        "phase": "export",
+        "name": "package/splits/fold_2/patient_split.parquet"
+      },
+      "target": {
+        "name": "splits/fold_2/patient_split.parquet",
+        "root": "processed"
+      }
+    },
+    {
+      "source": {
+        "stage": "step12",
+        "phase": "export",
+        "name": "package/splits/fold_3/patient_split.parquet"
+      },
+      "target": {
+        "name": "splits/fold_3/patient_split.parquet",
+        "root": "processed"
+      }
+    },
+    {
+      "source": {
+        "stage": "step12",
+        "phase": "export",
+        "name": "package/splits/fold_4/patient_split.parquet"
+      },
+      "target": {
+        "name": "splits/fold_4/patient_split.parquet",
+        "root": "processed"
+      }
+    },
+    {
+      "source": {
+        "stage": "step12",
+        "phase": "export",
+        "name": "package/splits/fold_5/patient_split.parquet"
+      },
+      "target": {
+        "name": "splits/fold_5/patient_split.parquet",
+        "root": "processed"
+      }
+    },
+    {
+      "source": {
+        "stage": "step05",
+        "phase": "freeze",
+        "name": "endpoint_decision.json"
+      },
+      "target": {
+        "name": "endpoint_decision.json",
+        "root": "outputs"
+      }
+    },
+    {
+      "source": {
+        "stage": "step08",
+        "phase": "freeze",
+        "name": "cohort_freeze.json"
+      },
+      "target": {
+        "name": "parent_cohort_freeze.json",
+        "root": "outputs"
+      }
+    },
+    {
+      "source": {
+        "stage": "step10",
+        "phase": "freeze",
+        "name": "lab_dictionary.parquet"
+      },
+      "target": {
+        "name": "lab_dictionary.parquet",
+        "root": "processed"
+      }
+    },
+    {
+      "source": {
+        "stage": "step10",
+        "phase": "audit",
+        "name": "cache/labs_candidate_subset.parquet"
+      },
+      "target": {
+        "name": "cache/labs_candidate_subset.parquet",
+        "root": "processed"
+      }
+    },
+    {
+      "source": {
+        "stage": "step10",
+        "phase": "audit",
+        "name": "cache/admissions.parquet"
+      },
+      "target": {
+        "name": "cache/lab_admissions.parquet",
+        "root": "processed"
+      }
+    },
+    {
+      "source": {
+        "stage": "step11",
+        "phase": "audit",
+        "name": "cache/patients.parquet"
+      },
+      "target": {
+        "name": "cache/static_patients.parquet",
+        "root": "processed"
+      }
+    },
+    {
+      "source": {
+        "stage": "step11",
+        "phase": "audit",
+        "name": "cache/admissions.parquet"
+      },
+      "target": {
+        "name": "cache/static_admissions.parquet",
+        "root": "processed"
+      }
+    },
+    {
+      "source": {
+        "stage": "step11",
+        "phase": "audit",
+        "name": "cache/services.parquet"
+      },
+      "target": {
+        "name": "cache/static_services.parquet",
+        "root": "processed"
+      }
+    }
+  ]
+}

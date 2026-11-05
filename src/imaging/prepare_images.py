@@ -28,6 +28,7 @@ from src.imaging.preprocessing import (
     validate_pixels,
     validate_settings,
 )
+from src.utils import master_reuse
 
 REVIEW_COLUMNS = "sample_id dicom_id decision rationale reviewer reviewed_on".split()
 KEY_COLUMNS = "sample_id subject_id hadm_id study_id dicom_id dicom_path view_position t0".split()
@@ -56,14 +57,24 @@ SCHEMA = pa.schema(
 )
 
 
-def load_inputs(context, store):
+def load_inputs(context, store, *, parent_run=None):
     refs = [store.manifest_ref(step, phase) for step, phase in [("step02", "build"), ("step03", "select"), ("step06", "build")]]
-    manifests = [store.validate(ref) for ref in refs]
-    index_path, selection_path, label_path = [context.layout.resolve(store.output_ref(m, name)) for m, name in zip(
-        manifests, ("cxr_index.parquet", "study_image_selection.parquet", "study_burden_labels.parquet"), strict=True)]
-    metadata = read_json(context.layout.resolve(store.output_ref(manifests[-1], "run_metadata.json")))
+    if parent_run is None:
+        manifests = [store.validate(ref) for ref in refs]
+        index_path, selection_path, label_path = [context.layout.resolve(store.output_ref(m, name)) for m, name in zip(
+            manifests, ("cxr_index.parquet", "study_image_selection.parquet", "study_burden_labels.parquet"), strict=True)]
+        metadata = read_json(context.layout.resolve(store.output_ref(manifests[-1], "run_metadata.json")))
+        label_run = context.key
+    else:
+        reuse = master_reuse.reuse_manifest(context, store, parent_run)
+        refs = [reuse["self"]]
+        index_path = master_reuse.copied(store, reuse, "cxr_index.parquet", "step02", "build")
+        selection_path = master_reuse.copied(store, reuse, "study_image_selection.parquet", "step03", "select")
+        label_path = master_reuse.copied(store, reuse, "study_burden_labels.parquet", "step06", "build")
+        metadata = read_json(master_reuse.copied(store, reuse, "labels_metadata.json", "step06", "build", "run_metadata.json"))
+        label_run = f"v{context.version}_r{parent_run}"
     require(all(metadata.get(key) is True for key in ("formal_labels_published", "label_checks_passed", "horizon_frozen", "label_rules_frozen"))
-            and metadata.get("horizon_hours") == 72 and metadata.get("data_run") == context.key,
+            and metadata.get("horizon_hours") == 72 and metadata.get("data_run") == label_run,
             "LABELS_NOT_READY", "Formal 72-hour labels are required")
     labels = pq.read_table(
         label_path, columns=KEY_COLUMNS + ["label_status", "candidate_status"]
@@ -302,11 +313,18 @@ def prepare_images(context, processing_path="imaging/processing.json", reviews_p
     reviews_path = settings["reviews_path"] if reviews_path is None else reviews_path
     require(reviews_path is None or isinstance(reviews_path, str), "INVALID_IMAGE_REVIEW", "Review path must be relative or null")
     store = ManifestStore(context.layout, data=context)
-    labels, index, inputs = load_inputs(context, store)
+    parent_run = settings.get("parent_run")
+    reuse = None
+    if parent_run is not None:
+        reuse = master_reuse.reuse_manifest(context, store, parent_run)
+        master_reuse.parent_image_settings(store, reuse, settings)
+    labels, index, inputs = load_inputs(context, store, parent_run=parent_run)
     configs = [context.config_ref(processing_path), context.config_ref("imaging/raw_audit.json")]
     if reviews_path is not None:
         configs.append(context.config_ref(reviews_path))
     details = {"horizon_hours": 72}
+    if reuse is not None:
+        details["parent_run"] = parent_run
     required_bytes = len(labels) * (settings["size"] ** 2 * 8 + settings["preview_size"] ** 2 * 8) + 8 * 1024 * 1024
     image_dir, qc_dir = Path("data"), Path("reports")
     with store.publish("step07", "prepare", inputs=inputs, configs=configs, details=details,
@@ -376,7 +394,7 @@ def prepare_images(context, processing_path="imaging/processing.json", reviews_p
                             staged = run.path(target)
                             with staged.open("wb") as stream:
                                 np.save(stream, pixels, allow_pickle=False)
-                            validate_pixels(np.load(staged, allow_pickle=False))
+                            validate_pixels(np.load(staged, allow_pickle=False), settings["size"])
                             row.update(
                                 npy_relpath=relative, _prepared_duplicate=_duplicate_fingerprint(staged)
                             )
@@ -426,6 +444,8 @@ def prepare_images(context, processing_path="imaging/processing.json", reviews_p
                 "source_version": json.dumps(row["_source_version"], sort_keys=True),
                 "display_metadata": json.dumps(row.get("display_metadata", {}), sort_keys=True),
                 "issues": json.dumps(row["issues"]), "duplicate_groups": json.dumps(row["_duplicate_groups"])}, context.layout))
+        if reuse is not None:
+            master_reuse.verify_qc(store, reuse, serialized)
         table = pa.Table.from_pylist(serialized, schema=SCHEMA)
         for name in ("image_processing.parquet", "image_qc_status.parquet"):
             pq.write_table(table, work / name, compression="zstd")

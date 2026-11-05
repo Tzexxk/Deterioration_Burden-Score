@@ -564,11 +564,11 @@ def reconstruct_static(cohort, evidence, patients, admissions, services, actual)
     }
 
 
-def validate_pixels(path):
+def validate_pixels(path, size=224):
     image = np.load(path, allow_pickle=False)
     require(
         image.dtype == np.dtype("float32")
-        and image.shape == (224, 224)
+        and image.shape == (size, size)
         and np.isfinite(image).all()
         and (image >= 0).all()
         and (image <= 1).all(),

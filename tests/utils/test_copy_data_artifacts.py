@@ -222,7 +222,7 @@ class CopyArtifactTests(unittest.TestCase):
         self.error("VERSION_MISMATCH", lambda: DataContext.load(self.layout, 1, 2))
         import subprocess
         import sys
-        entry = Path(__file__).resolve().parents[2] / "scripts/utils/copy_data_artifacts.py"
+        entry = Path(__file__).resolve().parents[2] / "scripts/utils/reuse_data_artifacts.py"
         process = subprocess.run([sys.executable, "-B", str(entry), "--version", "1", "--run", "2"], capture_output=True, text=True)
         self.assertEqual(process.returncode, 2)
         self.assertIn("--config", process.stderr)

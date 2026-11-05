@@ -1,0 +1,21 @@
+{
+  "interface_version": "1.0",
+  "expected_counts": {
+    "studies": null,
+    "admissions": null,
+    "patients": null
+  },
+  "expected_split_studies": {
+    "train": null,
+    "validation": null,
+    "test": null
+  },
+  "expected_split_patients": {
+    "train": null,
+    "validation": null,
+    "test": null
+  },
+  "relocation_policy": "temporary_directory",
+  "failure_detail_limit": 50,
+  "workspace_estimate_bytes": 8589934592
+}

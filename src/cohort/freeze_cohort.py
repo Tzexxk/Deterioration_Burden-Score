@@ -21,6 +21,7 @@ from src.common.manifest import ManifestStore, write_json
 from src.common.paths import read_json, require
 from src.imaging import prepare_images as images
 from src.imaging.preprocessing import validate_pixels, validate_settings
+from src.utils import master_reuse
 
 PUBLICATION_FIELDS = "decision_version rules_version dictionary_version label_schema_version data_version data_run source_audit_generation source_freeze_generation".split()
 QC_FIELDS = {"npy_relpath": "npy_relpath", "processing_version": "processing_version",
@@ -442,9 +443,46 @@ def write_reports(
     return summary
 
 
+def freeze_master_cohort(context, store, image):
+    reuse, _, cohort, audit_table, _, records = master_reuse.rebuild_cohort(context, store, image)
+    summary = read_json(master_reuse.copied(store, reuse, "parent_cohort_freeze.json", "step08", "freeze",
+                                           "cohort_freeze.json"))["summary"]
+    counts = _counts(cohort.to_pylist())
+    require(summary["counts"] == counts and summary["candidate_counts"] == _counts(audit_table.to_pylist()),
+            "MASTER_COHORT_CHANGED", "Master cohort counts differ from the parent")
+    for row in records:
+        if row["qc_status"] == "pass":
+            path = master_reuse.published(store, image, row["npy_relpath"])
+            validate_pixels(np.load(path, allow_pickle=False), 1024)
+    parent_run = image["details"]["parent_run"]
+    details = {"horizon_hours": 72, "common_cohort_frozen": True, "cohort_checks_passed": True,
+               "parent_run": parent_run, "counts": counts, "candidate_counts": summary["candidate_counts"],
+               "image_generation": image["generation"]}
+    image_ref = {"manifest": image["self"], "generation": image["generation"]}
+    with store.publish("step08", "freeze", inputs=[reuse["self"], image["self"]], details=details,
+                       data_files=TABLE_NAMES, required_bytes=128 * 1024 * 1024) as work:
+        require(store.validate(image["self"]) == image and store.validate(reuse["self"]) == reuse,
+                "UPSTREAM_REBUILT", "Master inputs changed during cohort reconstruction")
+        for table, name in zip((cohort, audit_table), TABLE_NAMES, strict=True):
+            pq.write_table(table, work / name, compression="zstd")
+        metadata = {"data_run": context.key, "cohort_version": context.key, **details, "summary": summary,
+                    "image_manifest": image_ref,
+                    "image_cache": context.layout.ref("processed", f"{context.key}/steps/step07/prepare")}
+        write_json(work / "cohort_freeze.json", metadata)
+        write_json(work / "run_metadata.json", metadata)
+        (work / "report.md").write_text(
+            "# Master image cohort\n\nParent membership and clinical values verified. "
+            "Image fields reference the new master publication.\n", encoding="utf-8", newline="\n"
+        )
+    return 0
+
+
 def freeze_common_cohort(data_context):
     started = datetime.now(timezone.utc)
     store = ManifestStore(data_context.layout,data=data_context)
+    image = store.validate(store.manifest_ref("step07", "prepare"))
+    if "parent_run" in image["details"]:
+        return freeze_master_cohort(data_context, store, image)
     refs = [store.manifest_ref(step,phase) for step,phase in [("step06","build"),("step07","prepare")]]
     details = {"horizon_hours":72}
     with store.publish("step08","freeze",inputs=refs,details=details,data_files=TABLE_NAMES,

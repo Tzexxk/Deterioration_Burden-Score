@@ -22,6 +22,7 @@ from src.ehr import build_ehr_features as upstream
 from src.ehr import build_features as features
 from src.ehr import feature_engine as engine
 from src.imaging.preprocessing import validate_pixels
+from src.utils import master_reuse
 
 IMAGE_SCHEMA = pa.schema(
     [(name, pa.string()) for name in ("sample_id", "dicom_id", "dicom_root", "dicom_path", "npy_root", "npy_path",
@@ -141,7 +142,7 @@ def git_state(project):
     return {"git_commit": commit, "git_worktree_dirty": bool(status)}
 
 
-def package_readme(key, generated, *, five_fold=False):
+def package_readme(key, generated, *, five_fold=False, size=224):
     text = f'''# Training package {key}
 
 Interface 1.0. Outcome window: 72 hours. EHR lookback: 24 hours.
@@ -165,7 +166,7 @@ gray = np.load(DATA_ROOT / samples.iloc[0]["image_relpath"], allow_pickle=False)
 image = np.repeat(gray[None, :, :], 3, axis=0)
 ```
 
-NPY files are float32, 224x224, single-channel, finite and in [0,1]. Do not
+NPY files are float32, {size}x{size}, single-channel, finite and in [0,1]. Do not
 divide by 255 again. Model normalization and augmentation belong to the loader.
 Numeric EHR missing values remain NaN; categorical missing values are __MISSING__.
 Fit imputation, scaling and category vocabularies on training patients only.
@@ -210,9 +211,11 @@ def metadata(context, settings, inputs, summaries, files, generated, dependencie
             "patient_split_files": sorted(name for name in cv_files if name.startswith("splits/")),
         }
     } if cv_files else {}
-    return portable({**cross_validation, "interface_version": settings["interface_version"], "release_id": context.key, "data_run": context.key,
-        "outcome_version": decision["outcome_version"], "cohort_version": context.key, "feature_set_version": context.key,
-        "dictionary_version": context.key, "split_version": context.key, "horizon_hours": 72, "ehr_lookback_hours": 24,
+    inherited = inputs.get("inherited_version", context.key)
+    parent = {"parent_release_id": inherited} if inherited != context.key else {}
+    return portable({**cross_validation, **parent, "interface_version": settings["interface_version"], "release_id": context.key, "data_run": context.key,
+        "outcome_version": decision["outcome_version"], "cohort_version": context.key, "feature_set_version": inherited,
+        "dictionary_version": inherited, "split_version": inherited, "horizon_hours": 72, "ehr_lookback_hours": 24,
         "target_column": "burden_score", "target_range": [0, 8], "target_formula": decision["target_formula"],
         **({"split_columns": list(contract.FOLD_SPLIT_COLUMNS)} if cv_files else {"split_column": "split"}),
         "split_values": list(contract.SPLITS), "split_unit": "subject_id",
@@ -237,11 +240,20 @@ def run_export(context, config_path="export/training_package.json"):
     settings = load_settings(context, config_path)
     store = ManifestStore(context.layout, data=context)
     refs = [store.manifest_ref(step, phase) for step, phase in (("step11", "build"), ("step09", "split"), ("step08", "freeze"), ("step07", "prepare"))]
+    cohort = store.validate(store.manifest_ref("step08", "freeze"))
+    master = "parent_run" in cohort["details"]
+    if master:
+        refs = refs[2:]
     details = {"training_package_exported": True, "independent_validation_completed": False}
     with store.publish("step12", "export", inputs=refs, configs=[context.config_ref(config_path)],
                        data_directories=("package",), data_files=("training_package.zip",), details=details,
                        required_bytes=settings["workspace_estimate_bytes"]) as work:
-        inputs = load_inputs(context, store, work)
+        if master:
+            require(store.validate(cohort["self"]) == cohort, "UPSTREAM_REBUILT", "Master cohort generation changed")
+            image = store.validate(store.manifest_ref("step07", "prepare"))
+            inputs = master_reuse.package_inputs(context, store, cohort, image)
+        else:
+            inputs = load_inputs(context, store, work)
         cv_files = inputs["cv_files"]
         folds = [pq.read_table(cv_files[f"splits/fold_{i}/{split.TABLE_NAME}"])
                  for i in range(1, 6)] if cv_files else None
@@ -266,7 +278,7 @@ def run_export(context, config_path="export/training_package.json"):
         for name, source in inputs["cv_files"].items():
             shutil.copyfile(source, target(name))
         target("README.md").write_text(
-            package_readme(context.key, generated, five_fold=bool(inputs["cv_files"])),
+            package_readme(context.key, generated, five_fold=bool(cv_files), size=inputs["image_settings"]["size"]),
             encoding="utf-8", newline="\n",
         )
         for row in images.to_pylist():

@@ -8,7 +8,9 @@ import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
+import numpy as np
 import pyarrow.parquet as pq
+import pydicom
 
 from src.cohort import create_patient_split as split
 from src.cohort.burden_support import write_csv
@@ -16,6 +18,8 @@ from src.cohort.raw_io import _file_version
 from src.common.manifest import ManifestStore, write_json
 from src.common.paths import PipelineError, portable, read_json, relative, require
 from src.data import acceptance_checks as checks
+from src.imaging.preprocessing import process_dataset
+from src.utils import master_reuse
 
 PACKAGE_FILES = {"samples.parquet", "ehr_features.parquet", "feature_schema.json", "summary.csv", "README.md", "dataset_metadata.json"}
 PHASES = [("step01", "audit"), ("step02", "build"), ("step03", "select"), ("step04", "match"),
@@ -57,6 +61,8 @@ def verify_provenance(context, store):
         for dependency in manifest["inputs"]:
             visit(read_json(context.layout.resolve(dependency["manifest"])))
     visit(root)
+    if ("step06", "reuse") in manifests:
+        return verify_master_provenance(context, store, root, manifests)
     require(set(PHASES) <= set(manifests), "INCOMPLETE_LINEAGE", "Every required data phase must belong to the export lineage")
     def output(stage, phase, name):
         return context.layout.resolve(store.output_ref(manifests[(stage, phase)], name))
@@ -131,6 +137,44 @@ def verify_provenance(context, store):
     return result
 
 
+def verify_master_provenance(context, store, root, manifests):
+    required = {("step06", "reuse"), ("step07", "prepare"), ("step08", "freeze"), ("step12", "export")}
+    require(set(manifests) == required, "INCOMPLETE_LINEAGE", "Master package lineage is incomplete")
+    image, cohort = manifests[("step07", "prepare")], manifests[("step08", "freeze")]
+    inputs = master_reuse.package_inputs(context, store, cohort, image)
+    reuse = inputs["reuse"]
+    require(root["inputs"] == [{"manifest": m["self"], "generation": m["generation"]} for m in (cohort, image)],
+            "INCOMPLETE_LINEAGE", "Master export must bind the current cohort and images")
+    def output(name):
+        return master_reuse.published(store, root, name)
+    export = read_json(output("training_package_export.json"))
+    require(export.get("data_run") == export.get("release_id") == context.key
+            and export.get("training_package_exported") is True and export.get("upstream") == root["inputs"]
+            and export.get("independent_validation_completed") is False,
+            "INVALID_EXPORT_RECORD", "A current-run export with bound upstream generations is required")
+    package = output("package/samples.parquet").parent
+    for name, original in (("ehr_features.parquet", inputs["ehr_path"]), ("feature_schema.json", inputs["schema_path"])):
+        require((package / name).read_bytes() == original.read_bytes(),
+                "EXPORTED_FEATURE_CHANGED", "Packaged EHR differs from the accepted copy")
+    watched = {store.layout.resolve(m["self"]) for m in manifests.values()}
+    for m in manifests.values():
+        watched.update(master_reuse.published(store, m, x["name"]) for x in m["outputs"])
+    def cached(name, step, source_name):
+        return master_reuse.copied(store, reuse, "cache/" + name, step, "audit", "cache/" + source_name)
+    return {
+        **inputs, "manifests": manifests, "export_manifest": root, "export": export, "package": package,
+        "archive": output("training_package.zip"), "split": inputs["patients"], "evidence": inputs["cohort_audit"],
+        "samples": pq.read_table(output("package/samples.parquet")), "rules": checks.retained_rules(inputs["rules_table"]),
+        "images": pq.read_table(output("image_manifest.parquet")),
+        "qc": pq.read_table(master_reuse.published(store, image, "image_qc_status.parquet")),
+        "labs": cached("labs_candidate_subset.parquet", "step10", "labs_candidate_subset.parquet"),
+        "lab_admissions": pq.read_table(cached("lab_admissions.parquet", "step10", "admissions.parquet")),
+        "static": {name: pq.read_table(cached(f"static_{name}.parquet", "step11", f"{name}.parquet"))
+                   for name in ("patients", "admissions", "services")},
+        "watched": {path: _file_version(path) for path in watched},
+    }
+
+
 def validate_sample_splits(source, settings):
     cv_files = source.get("cv_files", {})
     samples, cohort, primary = (source[k] for k in ("samples", "cohort", "split"))
@@ -140,7 +184,7 @@ def validate_sample_splits(source, settings):
     for name, path in cv_files.items():
         checks.require((source["package"] / name).read_bytes() == path.read_bytes(), "Packaged fold artifact differs from Step09")
     bundle = read_json(cv_files[split.CV_INDICES])
-    split.validate_cv_indices(cohort, bundle, primary)
+    split.validate_cv_indices(source.get("parent_cohort", cohort), bundle, primary)
     checks.require(bundle["split_version"] == bundle["cohort_version"], "Index data version changed")
     checks.require(samples["sample_id"].to_pylist() == [row["sample_id"] for row in bundle["master"]],
                    "Packaged samples differ from the study index order")
@@ -180,7 +224,11 @@ def validate_images(context, store, source):
         target = context.layout.resolve(ref)
         path = source["package"] / relative(row["image_relpath"])
         checks.require(target.read_bytes() == path.read_bytes(), "Packaged image differs from its accepted source")
-        checks.validate_pixels(path)
+        checks.validate_pixels(path, source["image_settings"]["size"])
+        if "inherited_version" in source:
+            pixels = process_dataset(pydicom.dcmread(dicom, force=False), source["image_settings"])["pixels"]
+            checks.require(pixels is not None and np.array_equal(pixels, np.load(path, allow_pickle=False)),
+                           "Master pixels do not reproduce the source DICOM")
     return {"images_checked": len(samples), "source_dicoms_checked": len(samples)}
 
 
@@ -188,7 +236,10 @@ def validate_metadata(context, source, settings):
     package = source["package"]
     metadata = portable(read_json(package / "dataset_metadata.json"))
     for name in ("release_id", "data_run", "cohort_version", "split_version", "dictionary_version", "feature_set_version"):
-        checks.require(metadata[name] == context.key, "Metadata identity changed")
+        expected_version = source.get("inherited_version", context.key) if name in {"split_version", "dictionary_version", "feature_set_version"} else context.key
+        checks.require(metadata[name] == expected_version, "Metadata identity changed")
+    if "inherited_version" in source:
+        checks.require(metadata.get("parent_release_id") == source["inherited_version"], "Parent identity changed")
     checks.require(metadata["interface_version"] == settings["interface_version"] and metadata["horizon_hours"] == 72
                    and metadata["ehr_lookback_hours"] == 24 and metadata["target_column"] == "burden_score"
                    and metadata["target_range"] == [0, 8] and metadata["target_formula"] == source["decision"]["target_formula"]
@@ -208,7 +259,7 @@ def validate_metadata(context, source, settings):
     checks.require(metadata["hypoxemia_source"] == "MIMIC-IV ICU chartevents only"
                    and metadata["live_discharge_rule"] == "Retain events in (t0, dischtime] when alive discharge precedes t0+H; absent recorded events are operational zeros.",
                    "Metadata source or discharge rule changed")
-    checks.require(metadata["image"] == {"format": "npy", "dtype": "float32", "shape": [224,224], "value_range": [0.0,1.0], "model_normalization_applied": False}
+    checks.require(metadata["image"] == {"format": "npy", "dtype": "float32", "shape": [source["image_settings"]["size"]] * 2, "value_range": [0.0,1.0], "model_normalization_applied": False}
                    and all(metadata["image_config"][name] == value for name,value in source["image_settings"].items()), "Metadata image policy changed")
     checks.require(metadata["split_rules"] == {name:source["split_settings"][name] for name in ("algorithm_version", "seed", "weights", "primary_stratum", "require_high_burden_in_each_split")}, "Split policy changed")
     checks.require(metadata["feature_counts"] == {"numeric":len(source["schema"]["numeric_features"]), "categorical":len(source["schema"]["categorical_features"])}
@@ -262,7 +313,7 @@ def relocate_archive(source, workspace):
             ehr, schema = pq.read_table(data / "ehr_features.parquet"), read_json(data / "feature_schema.json")
             checks.validate_ehr_contract(ehr, samples, schema, source["rules"])
             for row in samples.to_pylist():
-                checks.validate_pixels(data / relative(row["image_relpath"]))
+                checks.validate_pixels(data / relative(row["image_relpath"]), source["image_settings"]["size"])
         checks.require(not root.exists(), "Relocation temporary directory was not removed")
     return {"relocated_members":len(infos), "relocated_studies":samples.num_rows, "relocated_images":samples.num_rows,
             "data_root_only":True, "temporary_directory_removed":True}
@@ -316,6 +367,8 @@ def run_validation(context, config_path="export/validation.json"):
                 raise initial_error
             source.update(verify_provenance(context, store))
             source["watched"][config_file] = config_version
+            if "inherited_version" in source:
+                return {"parent_release_id": source["inherited_version"], "copied_inputs_verified": True}
             return {"completed_steps":list(range(1,13)), "step11_audit_and_build":True}
         if check("provenance", provenance):
             check("samples", lambda:validate_sample_splits(source, settings))
