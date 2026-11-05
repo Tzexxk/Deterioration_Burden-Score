@@ -1,0 +1,31 @@
+{
+  "data_release": "v1_r3",
+  "defaults": {
+    "sensitivity_target": 0.8,
+    "specificity_target": 0.8,
+    "plot_training_history": false
+  },
+  "experiments": [
+    {
+      "id": "e01",
+      "description": "Elastic Net development assessment for e01",
+      "parameters": {
+        "train_id": "e01"
+      }
+    },
+    {
+      "id": "e02",
+      "description": "Elastic Net development assessment for e02",
+      "parameters": {
+        "train_id": "e02"
+      }
+    },
+    {
+      "id": "e03",
+      "description": "Elastic Net development assessment for e03",
+      "parameters": {
+        "train_id": "e03"
+      }
+    }
+  ]
+}
