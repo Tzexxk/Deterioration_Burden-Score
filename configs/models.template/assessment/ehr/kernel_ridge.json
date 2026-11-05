@@ -1,0 +1,31 @@
+{
+  "data_release": "v1_r3",
+  "defaults": {
+    "sensitivity_target": 0.8,
+    "specificity_target": 0.8,
+    "plot_training_history": false
+  },
+  "experiments": [
+    {
+      "id": "k01",
+      "description": "Kernel Ridge development assessment for k01",
+      "parameters": {
+        "train_id": "k01"
+      }
+    },
+    {
+      "id": "k02",
+      "description": "Kernel Ridge development assessment for k02",
+      "parameters": {
+        "train_id": "k02"
+      }
+    },
+    {
+      "id": "k03",
+      "description": "Kernel Ridge development assessment for k03",
+      "parameters": {
+        "train_id": "k03"
+      }
+    }
+  ]
+}

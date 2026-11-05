@@ -1,7 +1,6 @@
 """Portable checkpoint interface shared by EHR linear estimators."""
 
 import warnings
-from importlib.metadata import version
 
 import numpy as np
 from sklearn.exceptions import ConvergenceWarning
@@ -9,6 +8,7 @@ from threadpoolctl import threadpool_limits
 
 from src.common.manifest import write_json
 from src.common.paths import read_json, require
+from src.models.ehr_fold import fold_interface, read_fold_interface
 from src.models.ehr_preprocessing import fit_preprocessing, transform_features
 
 
@@ -50,26 +50,14 @@ def fit_linear_fold(package, experiment, fold, folder, estimator):
         checkpoint["link"] = settings["link"]
     write_json(path, checkpoint)
     np.testing.assert_allclose(predict_checkpoint(read_json(path), x_validation), expected, rtol=0, atol=1e-12)
-    write_json(folder / "interface.json", {"fold": fold["fold"], "parameters": settings,
-               "features": list(package.features.columns), "scikit_learn_version": version("scikit-learn"),
-               "train_sample_ids": package.samples.iloc[train].sample_id.tolist(),
-               "validation_sample_ids": package.samples.iloc[validation].sample_id.tolist()})
+    write_json(folder / "interface.json", fold_interface(package, fold, settings))
     return {"fold": fold["fold"], "fit_method": "single_fit"}
 
 
 def checkpoint_prediction(store, manifest, package, fold):
-    def output(name):
-        ref = store.output_ref(manifest, f"fold_{fold['fold']}/{name}")
-        return store.layout.resolve(ref)
-
-    interface = read_json(output("interface.json"))
-    train, validation = fold["train_indices"], fold["validation_indices"]
-    require(interface["fold"] == fold["fold"] and interface["scikit_learn_version"] == version("scikit-learn")
-            and interface["features"] == list(package.features.columns)
-            and interface["train_sample_ids"] == package.samples.iloc[train].sample_id.tolist()
-            and interface["validation_sample_ids"] == package.samples.iloc[validation].sample_id.tolist(),
-            "INVALID_CHECKPOINT", "Linear checkpoint feature, version or fold identity differs")
-    checkpoint = read_json(output("model.json"))
+    interface = read_fold_interface(store, manifest, package, fold)
+    ref = store.output_ref(manifest, f"fold_{fold['fold']}/model.json")
+    checkpoint = read_json(store.layout.resolve(ref))
     require(checkpoint.get("link", "identity") == interface["parameters"].get("link", "identity"),
             "INVALID_CHECKPOINT", "Checkpoint link differs from its training interface")
-    return predict_checkpoint(checkpoint, package.features.iloc[validation]), None
+    return predict_checkpoint(checkpoint, package.features.iloc[fold["validation_indices"]]), None
