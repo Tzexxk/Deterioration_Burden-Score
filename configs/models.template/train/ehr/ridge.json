@@ -1,0 +1,66 @@
+{
+  "data_release": "v1_r3",
+  "defaults": {},
+  "experiments": [
+    {
+      "id": "r01",
+      "description": "R01 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "R01",
+          "family": "ridge",
+          "params": {
+            "alpha": 10,
+            "copy_X": true,
+            "fit_intercept": true,
+            "max_iter": null,
+            "positive": false,
+            "random_state": null,
+            "solver": "svd",
+            "tol": 0.0001
+          }
+        }
+      }
+    },
+    {
+      "id": "r02",
+      "description": "R02 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "R02",
+          "family": "ridge",
+          "params": {
+            "alpha": 100,
+            "copy_X": true,
+            "fit_intercept": true,
+            "max_iter": null,
+            "positive": false,
+            "random_state": null,
+            "solver": "svd",
+            "tol": 0.0001
+          }
+        }
+      }
+    },
+    {
+      "id": "r03",
+      "description": "R03 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "R03",
+          "family": "ridge",
+          "params": {
+            "alpha": 1000,
+            "copy_X": true,
+            "fit_intercept": true,
+            "max_iter": null,
+            "positive": false,
+            "random_state": null,
+            "solver": "svd",
+            "tol": 0.0001
+          }
+        }
+      }
+    }
+  ]
+}

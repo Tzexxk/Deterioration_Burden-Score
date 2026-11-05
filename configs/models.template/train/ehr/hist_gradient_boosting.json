@@ -1,0 +1,105 @@
+{
+  "data_release": "v1_r3",
+  "defaults": {},
+  "experiments": [
+    {
+      "id": "h01",
+      "description": "H01 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "H01",
+          "family": "hist",
+          "params": {
+            "categorical_features": null,
+            "early_stopping": false,
+            "interaction_cst": null,
+            "l2_regularization": 10,
+            "learning_rate": 0.03,
+            "loss": "squared_error",
+            "max_bins": 255,
+            "max_depth": null,
+            "max_features": 1.0,
+            "max_iter": 100,
+            "max_leaf_nodes": 3,
+            "min_samples_leaf": 20,
+            "monotonic_cst": null,
+            "n_iter_no_change": 10,
+            "quantile": null,
+            "random_state": 42,
+            "scoring": "loss",
+            "tol": 1e-07,
+            "validation_fraction": 0.1,
+            "verbose": 0,
+            "warm_start": false
+          }
+        }
+      }
+    },
+    {
+      "id": "h02",
+      "description": "H02 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "H02",
+          "family": "hist",
+          "params": {
+            "categorical_features": null,
+            "early_stopping": false,
+            "interaction_cst": null,
+            "l2_regularization": 10,
+            "learning_rate": 0.03,
+            "loss": "squared_error",
+            "max_bins": 255,
+            "max_depth": null,
+            "max_features": 1.0,
+            "max_iter": 100,
+            "max_leaf_nodes": 7,
+            "min_samples_leaf": 20,
+            "monotonic_cst": null,
+            "n_iter_no_change": 10,
+            "quantile": null,
+            "random_state": 42,
+            "scoring": "loss",
+            "tol": 1e-07,
+            "validation_fraction": 0.1,
+            "verbose": 0,
+            "warm_start": false
+          }
+        }
+      }
+    },
+    {
+      "id": "h03",
+      "description": "H03 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "H03",
+          "family": "hist",
+          "params": {
+            "categorical_features": null,
+            "early_stopping": false,
+            "interaction_cst": null,
+            "l2_regularization": 10,
+            "learning_rate": 0.03,
+            "loss": "squared_error",
+            "max_bins": 255,
+            "max_depth": null,
+            "max_features": 1.0,
+            "max_iter": 300,
+            "max_leaf_nodes": 7,
+            "min_samples_leaf": 20,
+            "monotonic_cst": null,
+            "n_iter_no_change": 10,
+            "quantile": null,
+            "random_state": 42,
+            "scoring": "loss",
+            "tol": 1e-07,
+            "validation_fraction": 0.1,
+            "verbose": 0,
+            "warm_start": false
+          }
+        }
+      }
+    }
+  ]
+}

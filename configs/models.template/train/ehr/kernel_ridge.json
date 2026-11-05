@@ -1,0 +1,60 @@
+{
+  "data_release": "v1_r3",
+  "defaults": {},
+  "experiments": [
+    {
+      "id": "k01",
+      "description": "K01 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "K01",
+          "family": "kernel",
+          "params": {
+            "alpha": 1,
+            "coef0": 1,
+            "degree": 3,
+            "gamma": 1.0,
+            "kernel": "rbf",
+            "kernel_params": null
+          }
+        }
+      }
+    },
+    {
+      "id": "k02",
+      "description": "K02 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "K02",
+          "family": "kernel",
+          "params": {
+            "alpha": 10,
+            "coef0": 1,
+            "degree": 3,
+            "gamma": 1.0,
+            "kernel": "rbf",
+            "kernel_params": null
+          }
+        }
+      }
+    },
+    {
+      "id": "k03",
+      "description": "K03 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "K03",
+          "family": "kernel",
+          "params": {
+            "alpha": 100,
+            "coef0": 1,
+            "degree": 3,
+            "gamma": 1.0,
+            "kernel": "rbf",
+            "kernel_params": null
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "data_release": "v1_r3",
+  "defaults": {},
+  "experiments": [
+    {
+      "id": "t01",
+      "description": "T01 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "T01",
+          "family": "extra",
+          "params": {
+            "bootstrap": false,
+            "ccp_alpha": 0.0,
+            "criterion": "squared_error",
+            "max_depth": 4,
+            "max_features": 0.7,
+            "max_leaf_nodes": null,
+            "max_samples": null,
+            "min_impurity_decrease": 0.0,
+            "min_samples_leaf": 10,
+            "min_samples_split": 2,
+            "min_weight_fraction_leaf": 0.0,
+            "monotonic_cst": null,
+            "n_estimators": 300,
+            "n_jobs": 1,
+            "oob_score": false,
+            "random_state": 42,
+            "verbose": 0,
+            "warm_start": false
+          }
+        }
+      }
+    },
+    {
+      "id": "t02",
+      "description": "T02 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "T02",
+          "family": "extra",
+          "params": {
+            "bootstrap": false,
+            "ccp_alpha": 0.0,
+            "criterion": "squared_error",
+            "max_depth": 8,
+            "max_features": 0.7,
+            "max_leaf_nodes": null,
+            "max_samples": null,
+            "min_impurity_decrease": 0.0,
+            "min_samples_leaf": 10,
+            "min_samples_split": 2,
+            "min_weight_fraction_leaf": 0.0,
+            "monotonic_cst": null,
+            "n_estimators": 300,
+            "n_jobs": 1,
+            "oob_score": false,
+            "random_state": 42,
+            "verbose": 0,
+            "warm_start": false
+          }
+        }
+      }
+    },
+    {
+      "id": "t03",
+      "description": "T03 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "T03",
+          "family": "extra",
+          "params": {
+            "bootstrap": false,
+            "ccp_alpha": 0.0,
+            "criterion": "squared_error",
+            "max_depth": null,
+            "max_features": 0.7,
+            "max_leaf_nodes": null,
+            "max_samples": null,
+            "min_impurity_decrease": 0.0,
+            "min_samples_leaf": 20,
+            "min_samples_split": 2,
+            "min_weight_fraction_leaf": 0.0,
+            "monotonic_cst": null,
+            "n_estimators": 300,
+            "n_jobs": 1,
+            "oob_score": false,
+            "random_state": 42,
+            "verbose": 0,
+            "warm_start": false
+          }
+        }
+      }
+    }
+  ]
+}

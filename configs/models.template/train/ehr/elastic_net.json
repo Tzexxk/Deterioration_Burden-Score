@@ -1,0 +1,75 @@
+{
+  "data_release": "v1_r3",
+  "defaults": {},
+  "experiments": [
+    {
+      "id": "e01",
+      "description": "E01 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "E01",
+          "family": "elastic",
+          "params": {
+            "alpha": 0.01,
+            "copy_X": true,
+            "fit_intercept": true,
+            "l1_ratio": 0.1,
+            "max_iter": 20000,
+            "positive": false,
+            "precompute": false,
+            "random_state": null,
+            "selection": "cyclic",
+            "tol": 1e-06,
+            "warm_start": false
+          }
+        }
+      }
+    },
+    {
+      "id": "e02",
+      "description": "E02 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "E02",
+          "family": "elastic",
+          "params": {
+            "alpha": 0.1,
+            "copy_X": true,
+            "fit_intercept": true,
+            "l1_ratio": 0.1,
+            "max_iter": 20000,
+            "positive": false,
+            "precompute": false,
+            "random_state": null,
+            "selection": "cyclic",
+            "tol": 1e-06,
+            "warm_start": false
+          }
+        }
+      }
+    },
+    {
+      "id": "e03",
+      "description": "E03 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "E03",
+          "family": "elastic",
+          "params": {
+            "alpha": 0.1,
+            "copy_X": true,
+            "fit_intercept": true,
+            "l1_ratio": 0.5,
+            "max_iter": 20000,
+            "positive": false,
+            "precompute": false,
+            "random_state": null,
+            "selection": "cyclic",
+            "tol": 1e-06,
+            "warm_start": false
+          }
+        }
+      }
+    }
+  ]
+}

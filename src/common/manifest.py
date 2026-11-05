@@ -79,19 +79,33 @@ def file_lock(path):
 
 
 class ManifestStore:
-    def __init__(self, layout, *, data=None, family=None, experiment=None):
+    def __init__(self, layout, *, data=None, family=None, experiment=None, model_stage=None, model=None):
         self.layout = layout
         self.data = data
         if data is not None:
-            require(data.layout.project == layout.project and family is None and experiment is None,
+            require(data.layout.project == layout.project and all(value is None for value in (family, experiment, model_stage, model)),
                     "INVALID_SCOPE", "Data and model scopes must be separate")
             self.scope = {"kind": "data", "version": data.version, "run": data.run}
             self.prefix = f"data/{data.key}"
         else:
             require(family in ("ehr", "image"), "INVALID_SCOPE", "Select ehr or image model family")
             self.scope = {"kind": "model", "family": family, "experiment": identifier(experiment)}
-            self.prefix = f"models/{family}/{experiment}"
+            require((model_stage is None) == (model is None), "INVALID_SCOPE", "Model stage and model must be supplied together")
+            if model_stage is not None:
+                self.scope.update(model_stage=model_stage, model=model)
+            self.prefix = self._model_prefix(self.scope)
         self.control = layout.path("outputs", f"{self.prefix}/.control")
+
+    @staticmethod
+    def _model_prefix(scope):
+        family = scope.get("family")
+        require(family in ("ehr", "image"), "INVALID_SCOPE", "Unknown model modality")
+        experiment = identifier(scope.get("experiment"))
+        if "model_stage" not in scope and "model" not in scope:
+            return f"models/{family}/{experiment}"
+        stage = scope.get("model_stage")
+        require(stage in ("train", "assessment", "test"), "INVALID_SCOPE", "Unknown model stage")
+        return f"models/{stage}/{family}/{identifier(scope.get('model'))}/{experiment}"
 
     def _ref(self, path):
         return self.layout.ref("outputs", path.relative_to(self.layout.roots["outputs"]).as_posix())
@@ -181,8 +195,10 @@ class ManifestStore:
             positive(scope.get("run"))
             prefix = f"data/v{scope['version']}_r{scope['run']}"
         else:
-            require(scope.get("kind") == "model" and scope.get("family") in ("ehr", "image"), "INVALID_SCOPE", "Unknown upstream scope")
-            prefix = f"models/{scope['family']}/{identifier(scope.get('experiment'))}"
+            require(scope.get("kind") == "model", "INVALID_SCOPE", "Unknown upstream scope")
+            prefix = self._model_prefix(scope)
+            if "model_stage" in scope:
+                require(ref["path"].startswith(prefix + "/"), "INVALID_MANIFEST", "Model manifest is outside its experiment")
         expected_control = self.layout.path("outputs", f"{prefix}/.control")
         expected_state = expected_control / f"{manifest['stage']}.{manifest['phase']}.state.json"
         require(state_path == expected_state, "INVALID_MANIFEST", "Stage state location mismatch")

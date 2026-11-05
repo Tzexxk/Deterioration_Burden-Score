@@ -1,0 +1,179 @@
+{
+  "data_release": "v1_r3",
+  "defaults": {
+    "config_version": "ehr_modeling_v4",
+    "protocol_id": "ehr_r02_mlp_cv_v4",
+    "experiment_status": "development_only",
+    "seed": 42,
+    "model": {
+      "family": "CatBoostRegressor",
+      "task_type": "CPU",
+      "loss_function": "RMSE",
+      "eval_metric": "RMSE",
+      "iterations": 500,
+      "learning_rate": 0.03,
+      "early_stopping_rounds": 50,
+      "use_best_model": true,
+      "thread_count": 1,
+      "allow_writing_files": false,
+      "verbose": false
+    },
+    "preprocessing": {
+      "numeric": "train_median_empty_zero_then_standardize",
+      "indicators": "all_numeric_unscaled",
+      "categorical": "train_onehot_unknown_ignore",
+      "order": [
+        "numeric",
+        "missing",
+        "categorical"
+      ]
+    },
+    "selection": {
+      "relative_improvement": 0.005,
+      "shortlist_limit": 1,
+      "seeds": [
+        42,
+        43,
+        44
+      ],
+      "min_wins": 2,
+      "final_seed": 42
+    },
+    "postprocessing": {
+      "raw_column": "predicted_score",
+      "processed_column": "postprocessed_score",
+      "clip_range": [
+        0.0,
+        8.0
+      ],
+      "role": "secondary_reporting_only"
+    },
+    "final_model": {
+      "scheme": "single_model_refit_on_all_development",
+      "round_rule": "median_best_rounds_half_up",
+      "use_best_model": false,
+      "early_stopping_rounds": null
+    },
+    "evaluation": {
+      "endpoints": [
+        "phys_death",
+        "high_burden"
+      ],
+      "auprc_method": "average_precision_score",
+      "threshold_prediction_column": "predicted_score",
+      "threshold_rule": "highest_finite_oof_threshold_meeting_sensitivity",
+      "sensitivity_target": 0.8,
+      "bootstrap_unit": "subject_id",
+      "bootstrap_draws": 2000,
+      "bootstrap_seed": 42,
+      "confidence_level": 0.95,
+      "confidence_interval": "percentile",
+      "single_class_bootstrap": "skip_auroc_and_ap_record_valid_and_skipped"
+    },
+    "versions": {
+      "scikit-learn": "1.9.1",
+      "xgboost": "3.2.0",
+      "joblib": "1.5.3",
+      "numpy": "2.4.6",
+      "scipy": "1.17.1",
+      "catboost": "1.2.10",
+      "torch": "2.14.0+cu132"
+    },
+    "diagnostics": {
+      "fold": 1,
+      "seeds": [
+        42,
+        43,
+        44
+      ],
+      "subset_positive_patients": 16,
+      "subset_zero_patients": 16,
+      "subset_hidden": 32,
+      "subset_max_epochs": 5000,
+      "subset_mse_ratio": 0.01,
+      "subset_lr": 0.001,
+      "lbfgs_hidden": 16,
+      "lbfgs_alpha": [
+        1,
+        10
+      ],
+      "lbfgs_budgets": [
+        [
+          1000,
+          20000
+        ],
+        [
+          5000,
+          100000
+        ]
+      ],
+      "lbfgs_tol": 1e-05
+    },
+    "torch_training": {
+      "device": "cpu",
+      "threads": 1,
+      "dtype": "float32",
+      "activation": "relu",
+      "output": "linear",
+      "max_epochs": 3000,
+      "patience": 200,
+      "min_delta": 1e-05,
+      "minimum_epochs": 200,
+      "weight_decay": 0.001,
+      "betas": [
+        0.9,
+        0.999
+      ],
+      "eps": 1e-08,
+      "batch": "full",
+      "gradient_clipping": false,
+      "scheduler": null
+    }
+  },
+  "experiments": [
+    {
+      "id": "p01",
+      "description": "P01 (development_cv)",
+      "parameters": {
+        "candidate": {
+          "name": "P01",
+          "hidden": 8,
+          "lr": 0.001
+        }
+      }
+    },
+    {
+      "id": "p02",
+      "description": "P02 (development_cv)",
+      "parameters": {
+        "candidate": {
+          "name": "P02",
+          "hidden": 8,
+          "lr": 0.0003
+        }
+      }
+    },
+    {
+      "id": "p03",
+      "description": "P03 (development_cv)",
+      "parameters": {
+        "candidate": {
+          "name": "P03",
+          "hidden": 16,
+          "lr": 0.001
+        }
+      }
+    },
+    {
+      "id": "p04",
+      "description": "P04 (development_cv)",
+      "parameters": {
+        "candidate": {
+          "name": "P04",
+          "hidden": 16,
+          "lr": 0.0003
+        }
+      }
+    }
+  ]
+}

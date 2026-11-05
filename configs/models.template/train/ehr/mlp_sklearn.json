@@ -1,0 +1,158 @@
+{
+  "data_release": "v1_r3",
+  "defaults": {},
+  "experiments": [
+    {
+      "id": "n01",
+      "description": "N01 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "N01",
+          "family": "mlp",
+          "params": {
+            "activation": "tanh",
+            "alpha": 1,
+            "batch_size": "auto",
+            "beta_1": 0.9,
+            "beta_2": 0.999,
+            "early_stopping": false,
+            "epsilon": 1e-08,
+            "hidden_layer_sizes": [
+              16
+            ],
+            "learning_rate": "constant",
+            "learning_rate_init": 0.001,
+            "loss": "squared_error",
+            "max_fun": 20000,
+            "max_iter": 1000,
+            "momentum": 0.9,
+            "n_iter_no_change": 10,
+            "nesterovs_momentum": true,
+            "power_t": 0.5,
+            "random_state": 42,
+            "shuffle": true,
+            "solver": "lbfgs",
+            "tol": 1e-05,
+            "validation_fraction": 0.1,
+            "verbose": false,
+            "warm_start": false
+          }
+        }
+      }
+    },
+    {
+      "id": "n02",
+      "description": "N02 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "N02",
+          "family": "mlp",
+          "params": {
+            "activation": "tanh",
+            "alpha": 10,
+            "batch_size": "auto",
+            "beta_1": 0.9,
+            "beta_2": 0.999,
+            "early_stopping": false,
+            "epsilon": 1e-08,
+            "hidden_layer_sizes": [
+              16
+            ],
+            "learning_rate": "constant",
+            "learning_rate_init": 0.001,
+            "loss": "squared_error",
+            "max_fun": 20000,
+            "max_iter": 1000,
+            "momentum": 0.9,
+            "n_iter_no_change": 10,
+            "nesterovs_momentum": true,
+            "power_t": 0.5,
+            "random_state": 42,
+            "shuffle": true,
+            "solver": "lbfgs",
+            "tol": 1e-05,
+            "validation_fraction": 0.1,
+            "verbose": false,
+            "warm_start": false
+          }
+        }
+      }
+    },
+    {
+      "id": "n03",
+      "description": "N03 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "N03",
+          "family": "mlp",
+          "params": {
+            "activation": "tanh",
+            "alpha": 1,
+            "batch_size": "auto",
+            "beta_1": 0.9,
+            "beta_2": 0.999,
+            "early_stopping": false,
+            "epsilon": 1e-08,
+            "hidden_layer_sizes": [
+              32
+            ],
+            "learning_rate": "constant",
+            "learning_rate_init": 0.001,
+            "loss": "squared_error",
+            "max_fun": 20000,
+            "max_iter": 1000,
+            "momentum": 0.9,
+            "n_iter_no_change": 10,
+            "nesterovs_momentum": true,
+            "power_t": 0.5,
+            "random_state": 42,
+            "shuffle": true,
+            "solver": "lbfgs",
+            "tol": 1e-05,
+            "validation_fraction": 0.1,
+            "verbose": false,
+            "warm_start": false
+          }
+        }
+      }
+    },
+    {
+      "id": "n04",
+      "description": "N04 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "N04",
+          "family": "mlp",
+          "params": {
+            "activation": "tanh",
+            "alpha": 10,
+            "batch_size": "auto",
+            "beta_1": 0.9,
+            "beta_2": 0.999,
+            "early_stopping": false,
+            "epsilon": 1e-08,
+            "hidden_layer_sizes": [
+              32
+            ],
+            "learning_rate": "constant",
+            "learning_rate_init": 0.001,
+            "loss": "squared_error",
+            "max_fun": 20000,
+            "max_iter": 1000,
+            "momentum": 0.9,
+            "n_iter_no_change": 10,
+            "nesterovs_momentum": true,
+            "power_t": 0.5,
+            "random_state": 42,
+            "shuffle": true,
+            "solver": "lbfgs",
+            "tol": 1e-05,
+            "validation_fraction": 0.1,
+            "verbose": false,
+            "warm_start": false
+          }
+        }
+      }
+    }
+  ]
+}

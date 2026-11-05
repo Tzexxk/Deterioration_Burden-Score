@@ -1,0 +1,75 @@
+{
+  "data_release": "v1_r3",
+  "defaults": {},
+  "experiments": [
+    {
+      "id": "s01",
+      "description": "S01 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "S01",
+          "family": "svr",
+          "params": {
+            "C": 0.1,
+            "cache_size": 200,
+            "coef0": 0.0,
+            "degree": 3,
+            "epsilon": 0.1,
+            "gamma": 1.0,
+            "kernel": "rbf",
+            "max_iter": 100000,
+            "shrinking": true,
+            "tol": 0.0001,
+            "verbose": false
+          }
+        }
+      }
+    },
+    {
+      "id": "s02",
+      "description": "S02 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "S02",
+          "family": "svr",
+          "params": {
+            "C": 1,
+            "cache_size": 200,
+            "coef0": 0.0,
+            "degree": 3,
+            "epsilon": 0.1,
+            "gamma": 1.0,
+            "kernel": "rbf",
+            "max_iter": 100000,
+            "shrinking": true,
+            "tol": 0.0001,
+            "verbose": false
+          }
+        }
+      }
+    },
+    {
+      "id": "s03",
+      "description": "S03 (cross_model)",
+      "parameters": {
+        "candidate": {
+          "name": "S03",
+          "family": "svr",
+          "params": {
+            "C": 10,
+            "cache_size": 200,
+            "coef0": 0.0,
+            "degree": 3,
+            "epsilon": 0.1,
+            "gamma": 1.0,
+            "kernel": "rbf",
+            "max_iter": 100000,
+            "shrinking": true,
+            "tol": 0.0001,
+            "verbose": false
+          }
+        }
+      }
+    }
+  ]
+}
