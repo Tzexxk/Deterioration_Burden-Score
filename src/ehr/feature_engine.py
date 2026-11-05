@@ -429,7 +429,8 @@ def validate_wide(table: pa.Table, cohort: pa.Table, schema: dict) -> None:
 
 
 def feature_reports(
-    connection, table: pa.Table, cohort: pa.Table, patients: pa.Table, schema: dict
+    connection, table: pa.Table, cohort: pa.Table, patients: pa.Table, schema: dict,
+    *, cv_indices: dict | None = None,
 ) -> tuple[list[dict], list[dict]]:
     split_by_patient = {r["subject_id"]: r["split"] for r in patients.to_pylist()}
     subject = {r["sample_id"]: r["subject_id"] for r in cohort.to_pylist()}
@@ -442,6 +443,14 @@ def feature_reports(
         ]
         for group in ["all", "train", "validation", "test"]
     }
+    if cv_indices is not None:
+        by_sample = {row["sample_id"]: row for row in rows}
+        master = cv_indices["master"]
+        for fold in cv_indices["folds"]:
+            for part in ("train", "validation"):
+                groups[f"fold_{fold['fold']}_{part}"] = [
+                    by_sample[master[i]["sample_id"]] for i in fold[f"{part}_indices"]
+                ]
     summary, missingness = [], []
     raw = {
         (r["sample_id"], r["feature_name"])

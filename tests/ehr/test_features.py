@@ -403,6 +403,28 @@ class FeatureTests(unittest.TestCase):
         self.assertEqual(manifest["inputs"], [{"manifest":self.store.manifest_ref("step11","audit"),"generation":1}])
         self.assertEqual({row["name"] for row in manifest["outputs"] if row["root"] == "processed"}, {"ehr_features_raw.parquet", "feature_schema.json"})
 
+    def test_feature_coverage_uses_fold_indices(self):
+        self.assertEqual(self.run_mode(), 0)
+        candidate = pq.read_table(self.output_path("audit", "cache/ehr_features_candidate.parquet"))
+        schema = read_json(self.output_path("audit", "feature_schema_candidate.json"))
+        inputs = pipeline.load_inputs(self.context, self.store)
+        connection = self.connection()
+        step.clean_labs(connection, inputs["rules"])
+        master = [{"sample_id": key} for key in candidate["sample_id"].to_pylist()]
+        indices = {"master": master, "folds": [
+            {"fold": 1, "train_indices": [0, 1], "validation_indices": [2]},
+            {"fold": 2, "train_indices": [2], "validation_indices": [0, 1]},
+        ]}
+        summary, missingness = step.feature_reports(
+            connection, candidate, self.cohort, inputs["patients"], schema, cv_indices=indices
+        )
+        for report in (summary, missingness):
+            self.assertEqual(
+                {r["split"]: r["studies"] for r in report if r["split"].startswith("fold_")},
+                {"fold_1_train": 2, "fold_1_validation": 1,
+                 "fold_2_train": 1, "fold_2_validation": 2},
+            )
+
     def test_static_conflict_keeps_diagnostics_but_blocks_build(self):
         self.services.append({**self.services[0], "curr_service":"SURG"})
         self.write_sources()

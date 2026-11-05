@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pyarrow.parquet as pq
 
+from src.cohort import create_patient_split as split
 from src.cohort.burden_io import open_store
 from src.cohort.burden_support import AuditWorkspace, write_csv
 from src.cohort.raw_io import _file_version
@@ -50,11 +51,15 @@ def load_inputs(context, store):
     rules = engine.validate_dictionary(read_output(context, store, frozen, "lab_dictionary.parquet"), context.key)
     cohort_manifest = store.validate(store.manifest_ref("step08", "freeze"))
     split_manifest = store.validate(store.manifest_ref("step09", "split"))
+    five_fold = split_manifest["details"].get("split_method") == "five-fold"
+    primary_table = f"fold_1/{split.TABLE_NAME}" if five_fold else split.TABLE_NAME
+    cv_indices = read_output(context, store, split_manifest, split.CV_INDICES, json=True) if five_fold else None
     return {
         "rules": rules,
         "cohort": read_output(context, store, cohort_manifest, "cohort.parquet"),
         "evidence": read_output(context, store, cohort_manifest, "cohort_audit.parquet"),
-        "patients": read_output(context, store, split_manifest, "patient_split.parquet"),
+        "patients": read_output(context, store, split_manifest, primary_table),
+        "cv_indices": cv_indices,
     }
 
 
@@ -98,7 +103,9 @@ def perform_audit(connection, run, context, store, sources, settings):
         row.update(static[row["sample_id"]])
     table = engine.float32_table(rows, schema)
     engine.validate_wide(table, cohort, schema)
-    summary, missingness = engine.feature_reports(connection, table, cohort, inputs["patients"], schema)
+    summary, missingness = engine.feature_reports(
+        connection, table, cohort, inputs["patients"], schema, cv_indices=inputs["cv_indices"]
+    )
     pq.write_table(table, run.path(Path("data/cache/ehr_features_candidate.parquet")), compression="zstd")
     lab.copy_parquet(connection, "lab_trace", run.path(Path("data/cache/lab_cleaning_trace.parquet")))
     write_json(run.path(Path("reports/feature_schema_candidate.json")), schema)
