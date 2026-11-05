@@ -23,18 +23,22 @@ BASELINE = "baseline_mean"
 RULES = ("sensitivity", "specificity")
 
 
-def discover(layout):
+def discover(layout, *, progress=None):
     root = layout.path("outputs", "models/assessment/ehr")
     sources = []
-    for path in sorted(root.glob("*/*/steps/assessment/run/manifest.json")):
+    paths = sorted(path for path in root.glob("*/*/steps/assessment/run/manifest.json")
+                   if path.relative_to(root).parts[0] != "comparison")
+    if progress:
+        progress(f"Validating assessments: 0/{len(paths)}")
+    for index, path in enumerate(paths, 1):
         model, key = path.relative_to(root).parts[:2]
-        if model == "comparison":
-            continue
         store = experiment_store(layout, "assessment", "ehr", model, key)
         ref = store.manifest_ref("assessment", "run")
         manifest = store.validate(ref)
         require(manifest["scope"] == store.scope, "INVALID_ASSESSMENT_SOURCE", f"Invalid assessment scope: {model}/{key}")
         sources.append((model, key, store, manifest))
+        if progress:
+            progress(f"Validating assessments: {index}/{len(paths)} ({model}/{key})")
     require(sources, "NO_ASSESSMENTS", "No completed EHR assessments were found")
     return sources
 
@@ -92,14 +96,16 @@ def regression_metrics(labels, scores, weights):
     return {"rmse": np.sqrt(ratio(weights @ (error ** 2), count)), "mae": ratio(weights @ np.abs(error), count)}
 
 
-def calculate_comparison(rows, scores, points, draws, seed):
+def calculate_comparison(rows, scores, points, draws, seed, *, progress=None):
+    if progress:
+        progress(f"Bootstrap ({draws:,} draws): 0/{len(scores)}")
     weights = np.vstack([np.ones(len(rows)), patient_weights(rows.subject_id.to_numpy(), draws, seed)])
     y = rows.burden_score.to_numpy(float)
     targets = {endpoint: rows[endpoint].to_numpy(bool) for endpoint in ENDPOINTS}
     baseline = regression_metrics(y, scores[BASELINE], weights)
     targets_by_rule = {rule: points[BASELINE][rule][ENDPOINTS[0]]["target"] for rule in RULES}
     free, based = {}, {rule: {} for rule in RULES}
-    for name, values in scores.items():
+    for index, (name, values) in enumerate(scores.items(), 1):
         metrics = regression_metrics(y, values, weights)
         for key, error in list(metrics.items()):
             metrics[f"{key}_relative_pct"] = 100 * ratio(error - baseline[key], baseline[key])
@@ -127,10 +133,12 @@ def calculate_comparison(rows, scores, points, draws, seed):
                 results[endpoint] = {"target": point["target"], "threshold": threshold,
                                      "comparison": point["comparison"], "metrics": calculated}
             based[rule][name] = results
+        if progress:
+            progress(f"Bootstrap ({draws:,} draws): {index}/{len(scores)} ({name})")
     return free, based, targets_by_rule
 
 
-def write_comparison(work, rows, free, based, targets, snapshot):
+def write_comparison(work, rows, free, based, targets, snapshot, *, progress=None):
     write_json(work / "effective_configuration.json", snapshot)
     write_json(work / "summary.json", {"studies": len(rows), "patients": int(rows.subject_id.nunique()),
                                       "positive_studies": {k: int(rows[k].sum()) for k in ENDPOINTS},
@@ -141,7 +149,7 @@ def write_comparison(work, rows, free, based, targets, snapshot):
     metrics = [("rmse_relative_pct", "RMSE difference (%)"), ("mae_relative_pct", "MAE difference (%)")]
     metrics.extend((f"{endpoint}_{name}", f"{endpoint} {name.upper()}")
                    for endpoint in ENDPOINTS for name in ("auroc", "ap"))
-    interval_plot(free, metrics, destination / "metrics.svg", title="Threshold-free OOF metrics")
+    plots = [(destination, free, metrics, "Threshold-free OOF")]
     for rule, result in based.items():
         target = targets[rule]
         destination = work / "threshold_based" / rule_folder(rule, target)
@@ -151,16 +159,29 @@ def write_comparison(work, rows, free, based, targets, snapshot):
                            for ep, value in endpoints.items() for name in selected}
                      for key, endpoints in result.items()}
         panels = [(f"{ep}_{name}", f"{ep} {name.upper()}") for ep in ENDPOINTS for name in selected]
-        interval_plot(flattened, panels, destination / "metrics.svg", title=f"OOF: {rule} ≥ {target:.0%}")
+        plots.append((destination, flattened, panels, f"OOF: {rule} ≥ {target:.0%}"))
+
+    total = sum(len(metrics) for _, _, metrics, _ in plots)
+    index = 0
+    if progress:
+        progress(f"Writing SVGs: 0/{total}")
+    for destination, results, metrics, title in plots:
+        for metric, label in metrics:
+            interval_plot(results, metric, destination / f"{metric}.svg", title=f"{title} · {label}", xlabel=label)
+            index += 1
+            if progress:
+                progress(f"Writing SVGs: {index}/{total} ({metric})")
 
 
-def run_comparison(layout, key, *, draws=5000, seed=42):
+def run_comparison(layout, key, *, draws=5000, seed=42, progress=None):
     identifier(key)
-    sources = discover(layout)
+    sources = discover(layout, progress=progress)
     release = sources[0][3]["details"]["data_release"]
     mismatched = [f"{model}/{candidate}" for model, candidate, _, manifest in sources
                   if manifest["details"]["data_release"] != release]
     require(not mismatched, "ASSESSMENT_DATA_MISMATCH", f"Data release differs: {', '.join(mismatched)}")
+    if progress:
+        progress("Loading frozen development data and assessment predictions")
     package = load_package(ReleasedData.load(layout, release))
     rows, scores, points = load_predictions(package, sources)
     inputs = [{"manifest": manifest["self"], "generation": manifest["generation"]} for _, _, _, manifest in sources]
@@ -172,8 +193,15 @@ def run_comparison(layout, key, *, draws=5000, seed=42):
     existing = completed_result(store, ref, snapshot, inputs)
     if existing:
         return existing
+    def input_progress(stage, index):
+        if progress:
+            progress(f"{stage}: {index}/{len(inputs)}")
+
+    input_progress("Binding assessments", 0)
     with store.publish("comparison", "run", inputs=[item["manifest"] for item in inputs],
+                       input_progress=input_progress,
                        details={"data_release": release, "assessment_ids": snapshot["parameters"]["assessment_ids"]}) as work:
-        free, based, targets = calculate_comparison(rows, scores, points, draws, seed)
-        write_comparison(work, rows, free, based, targets, snapshot)
+        free, based, targets = calculate_comparison(rows, scores, points, draws, seed, progress=progress)
+        write_comparison(work, rows, free, based, targets, snapshot, progress=progress)
+        input_progress("Rechecking assessments", 0)
     return {"id": key, "status": "complete", "manifest": ref}

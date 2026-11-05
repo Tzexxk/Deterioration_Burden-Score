@@ -94,7 +94,19 @@ class ManifestStore:
             if model_stage is not None:
                 self.scope.update(model_stage=model_stage, model=model)
             self.prefix = self._model_prefix(self.scope)
-        self.control = layout.path("outputs", f"{self.prefix}/.control")
+        self.flat = self._flat_comparison(self.scope)
+        self.control = layout.path("outputs", self._control_directory(self.prefix, self.flat))
+
+    @staticmethod
+    def _flat_comparison(scope):
+        return scope.get("model_stage") == "assessment" and scope.get("model") == "comparison"
+
+    @staticmethod
+    def _control_directory(prefix, flat):
+        if flat:
+            parent, experiment = prefix.rsplit("/", 1)
+            return f"{parent}/.control/{experiment}"
+        return f"{prefix}/.control"
 
     @staticmethod
     def _model_prefix(scope):
@@ -118,6 +130,9 @@ class ManifestStore:
             allowed = {"outputs": self.prefix}
         require(ref["root"] in allowed, "INVALID_DESTINATION", "Stage destination must use its writable root")
         base = self.layout.path(ref["root"], allowed[ref["root"]])
+        if self.flat and ref["root"] == "outputs":
+            if target == base or target.parent == self.control / "temp":
+                return target
         require(target != base and target.is_relative_to(base), "INVALID_DESTINATION", "Stage destination must be inside its run")
         return target
 
@@ -164,7 +179,10 @@ class ManifestStore:
         area = area or "outputs"
         require(area == "outputs", "INVALID_DESTINATION", "Manifests belong to outputs")
         base = self.data.key if area == "processed" and self.data else self.prefix
-        directory = destination or f"{base}/steps/{stage}/{phase}"
+        if self.flat:
+            require((stage, phase) == ("comparison", "run") and destination in (None, base),
+                    "INVALID_DESTINATION", "Comparison publishes directly at its experiment root")
+        directory = destination or (base if self.flat else f"{base}/steps/{stage}/{phase}")
         ref = self.layout.ref(area, f"{relative(directory)}/manifest.json")
         self._owned(ref)
         return ref
@@ -199,7 +217,11 @@ class ManifestStore:
             prefix = self._model_prefix(scope)
             if "model_stage" in scope:
                 require(ref["path"].startswith(prefix + "/"), "INVALID_MANIFEST", "Model manifest is outside its experiment")
-        expected_control = self.layout.path("outputs", f"{prefix}/.control")
+        flat = self._flat_comparison(scope) and ref["path"] == f"{prefix}/manifest.json"
+        if flat:
+            require((manifest["stage"], manifest["phase"]) == ("comparison", "run"),
+                    "INVALID_MANIFEST", "Only comparison results may be published at their experiment root")
+        expected_control = self.layout.path("outputs", self._control_directory(prefix, flat))
         expected_state = expected_control / f"{manifest['stage']}.{manifest['phase']}.state.json"
         require(state_path == expected_state, "INVALID_MANIFEST", "Stage state location mismatch")
         if self.data is None and scope["kind"] == "data":
@@ -249,15 +271,16 @@ class ManifestStore:
             value = self.layout.ref(root, path.relative_to(self.layout.roots[root]).as_posix())
             self._owned(value)
             return value
+        temp_dir = self.control / "temp" if self.flat else dest.parent / "temp"
         return {"destination": ref(dest),
-                "temp": ref(dest.parent / "temp" / (dest.name + "." + token)),
-                "backup": ref(dest.parent / "temp" / (dest.name + "." + token + ".backup")),
+                "temp": ref(temp_dir / (dest.name + "." + token)),
+                "backup": ref(temp_dir / (dest.name + "." + token + ".backup")),
                 "existed": dest.exists()}
 
     @contextmanager
     def publish(self, stage, phase, *, inputs=(), configs=(), area=None,
                 destination=None, action="generated", origin=None, details=None, required_bytes=0,
-                data_files=(), data_directories=(), utility_configs=()):
+                data_files=(), data_directories=(), utility_configs=(), input_progress=None):
         ref = self.manifest_ref(stage, phase, area=area, destination=destination)
         dest = self.layout.resolve(ref).parent
         state_path = self.control / f"{stage}.{phase}.state.json"
@@ -275,10 +298,12 @@ class ManifestStore:
             require(action in ("generated", "copied") and (action == "copied") == (origin is not None),
                     "INVALID_ACTION", "Copied publication requires explicit origin")
             bound = []
-            for item in inputs:
+            for index, item in enumerate(inputs, 1):
                 require(item != ref, "DEPENDENCY_CYCLE", "A stage cannot consume itself")
                 source = self.validate(item)
                 bound.append({"manifest": item, "generation": source["generation"]})
+                if input_progress is not None:
+                    input_progress("Binding assessments", index)
             for item in configs:
                 if self.data:
                     self.data.check_config_ref(item)
@@ -350,8 +375,10 @@ class ManifestStore:
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copyfile(temp / name, target)
                     (temp / name).unlink()
-                for item in bound:
+                for index, item in enumerate(bound, 1):
                     require(self.validate(item["manifest"])["generation"] == item["generation"], "UPSTREAM_REBUILT", "Input changed during execution")
+                    if input_progress is not None:
+                        input_progress("Rechecking assessments", index)
                 manifest = {"schema": 2, "self": ref, "scope": self.scope, "stage": stage, "phase": phase,
                             "generation": generation, "status": "complete", "state": self._ref(state_path),
                             "created_utc": datetime.now(timezone.utc).isoformat(), "inputs": bound,

@@ -3,6 +3,7 @@
 import argparse
 import json
 import sys
+from functools import partial
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
@@ -16,7 +17,8 @@ def main(argv=None):
     parser.add_argument("--id", required=True, help="ID for the published comparison")
     args = parser.parse_args(argv)
     try:
-        print(json.dumps(run_comparison(Layout(), args.id)))
+        progress = partial(print, file=sys.stderr, flush=True)
+        print(json.dumps(run_comparison(Layout(), args.id, progress=progress)))
         return 0
     except PipelineError as error:
         print(str(error), file=sys.stderr)

@@ -1,33 +1,44 @@
 """Model-level SVG comparisons for assessment summaries."""
 
 import numpy as np
+from matplotlib import colormaps
 from matplotlib.backends.backend_svg import FigureCanvasSVG
 from matplotlib.figure import Figure
 
 from src.models.ehr_metrics import ENDPOINTS
 
 
-def interval_plot(results, metrics, path, *, title):
+def interval_plot(results, metric, path, *, title, xlabel):
     keys = list(results)
-    figure = Figure(figsize=(12, max(8, 2.3 + len(keys) * 1.15)), layout="constrained")
+    models = sorted({key.split("/", 1)[0] for key in keys if "/" in key})
+    palette = colormaps["tab20"].colors
+    colors = dict(zip(models, (*palette[::2], *palette[1::2])))
+    figure = Figure(figsize=(11, max(3.5, 1.8 + len(keys) * 0.31)), layout="constrained")
     figure.suptitle(title)
-    axes = figure.subplots(3, 2).ravel()
-    for axis, (key, label) in zip(axes, metrics, strict=True):
-        axis.set_title(label)
-        axis.set_yticks(range(len(keys)), keys)
-        axis.invert_yaxis()
-        axis.grid(axis="x", alpha=0.25)
-        if key.endswith("_relative_pct"):
-            axis.axvline(0, color="gray", linestyle="--", linewidth=1)
-        else:
-            axis.set_xlim(-0.025, 1.025)
-        for i, name in enumerate(keys):
-            estimate = results[name][key]
-            if estimate["lower"] is not None:
-                axis.hlines(i, estimate["lower"], estimate["upper"], color="C0")
-                axis.scatter([estimate["lower"], estimate["upper"]], [i, i], color="C0", marker="|")
-            if estimate["point"] is not None:
-                axis.scatter(estimate["point"], i, color="C0")
+    axis, numbers = figure.subplots(1, 2, sharey=True, width_ratios=(3.3, 1.4))
+    axis.set_yticks(range(len(keys)), keys)
+    axis.set_ylim(len(keys) - 0.5, -0.5)
+    axis.set_xlabel(xlabel)
+    axis.grid(axis="x", alpha=0.25)
+    numbers.set_axis_off()
+    numbers.set_title("Point estimate [95% CI]", loc="left", fontsize=10)
+    relative = metric.endswith("_relative_pct")
+    if relative:
+        axis.axvline(0, color="gray", linestyle="--", linewidth=1)
+    else:
+        axis.set_xlim(-0.025, 1.025)
+    for i, name in enumerate(keys):
+        color = colors.get(name.split("/", 1)[0], "#606060")
+        estimate = results[name][metric]
+        point, lower, upper = (estimate[field] for field in ("point", "lower", "upper"))
+        text = "N/A"
+        if estimate["valid_draws"] and None not in (point, lower, upper):
+            axis.hlines(i, lower, upper, color=color)
+            axis.plot([lower, upper], [i, i], linestyle="none", marker="|", color=color)
+            axis.scatter(point, i, color=color, s=18, zorder=3)
+            text = (f"{point:+.2f}% [{lower:+.2f}%, {upper:+.2f}%]" if relative
+                    else f"{point:.3f} [{lower:.3f}, {upper:.3f}]")
+        numbers.text(0, i, text, va="center", fontsize=9, transform=numbers.get_yaxis_transform())
     FigureCanvasSVG(figure).print_svg(path)
 
 

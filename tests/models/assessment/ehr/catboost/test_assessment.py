@@ -71,8 +71,19 @@ class CatBoostAssessmentTests(unittest.TestCase):
                            details={"data_release": "v1_r3", "train_id": "review"}) as work:
             for name in ("oof_predictions.parquet", "operating_points.json"):
                 shutil.copyfile(folder / name, work / name)
-        summary = run_comparison(layout, "paired", draws=12)
         summary_store = experiment_store(layout, "assessment", "ehr", "comparison", "paired")
+        with self.assertRaises(InterruptedError), summary_store.publish("comparison", "run") as work:
+            write_json(work / "partial.json", {"temporary": True})
+            raise InterruptedError("synthetic publication failure")
+        self.assertFalse(layout.path("outputs", summary_store.prefix).exists())
+
+        progress = []
+        summary = run_comparison(layout, "paired", draws=12, progress=progress.append)
+        self.assertEqual(summary["manifest"]["path"], "models/assessment/ehr/comparison/paired/manifest.json")
+        self.assertTrue(any(line.startswith("Validating assessments: 2/2") for line in progress))
+        self.assertTrue(any(line.startswith("Bootstrap (12 draws): 3/3") for line in progress))
+        self.assertTrue(any(line.startswith("Writing SVGs: 18/18") for line in progress))
+        self.assertIn("Rechecking assessments: 2/2", progress)
         summary_manifest = summary_store.validate(summary["manifest"])
         self.assertEqual(summary_manifest["inputs"], [{"manifest": ref, "generation": 1} for ref in (
             entry["manifest"], ridge.manifest_ref("assessment", "run"))])
@@ -81,10 +92,16 @@ class CatBoostAssessmentTests(unittest.TestCase):
         self.assertEqual(free["baseline_mean"]["rmse_relative_pct"]["point"], 0)
         self.assertEqual(free["catboost/review"]["phys_death_ap"]["requested_draws"], 12)
         self.assertEqual(free["catboost/review"], free["ridge/review"])
-        for rule in ("sensitivity", "specificity"):
-            plot = out / "threshold_based" / f"{rule}_80" / "metrics.svg"
-            self.assertIn("<svg ", plot.read_text(encoding="utf-8"))
-            self.assertFalse(plot.with_name("confusion_matrices.svg").exists())
+        plots = list(out.rglob("*.svg"))
+        self.assertEqual(len(plots), 18)
+        for rule, metric in (("sensitivity", "ppv"), ("specificity", "npv")):
+            directory = out / "threshold_based" / f"{rule}_80"
+            self.assertEqual(len(list(directory.glob("*.svg"))), 6)
+            plot = directory / f"high_burden_{metric}.svg"
+            content = plot.read_text(encoding="utf-8")
+            for label in ("<svg ", "Point estimate [95% CI]", "catboost/review", "ridge/review", "baseline_mean"):
+                self.assertIn(label, content)
+        self.assertEqual(len(list((out / "threshold_free").glob("*.svg"))), 6)
         self.assertEqual(run_comparison(layout, "paired", draws=12)["status"], "unchanged")
         config["experiments"][1]["parameters"]["sensitivity_target"] = 0.9
         write_json(layout.path("project", CONFIG), config)
