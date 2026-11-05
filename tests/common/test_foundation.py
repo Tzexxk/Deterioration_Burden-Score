@@ -19,6 +19,31 @@ from src.common.paths import Layout, PipelineError, portable
 
 
 class FoundationTests(unittest.TestCase):
+    def test_raw_slash_number_results_preserve_text_but_are_not_file_paths(self):
+        for value in ("/14.", "/16.", "/18.", "/40."):
+            self.assertEqual(portable(value), value)
+            self.assertEqual(portable({"value": value}), {"value": value})
+            self.assertEqual(portable(json.dumps({"value": value})), json.dumps({"value": value}))
+            with self.assertRaises(PipelineError):
+                self.layout.path("outputs", value)
+        slash = chr(47)
+        for value in (slash + "18./file", "File " + slash + "18./file", slash + "outside/file"):
+            with self.assertRaises(PipelineError):
+                portable(value)
+
+    def test_slash_number_diagnostic_csv_can_be_published(self):
+        with self.store.publish("step10", "audit") as work:
+            (work / "examples.csv").write_text("record,value\nsynthetic,/18.\n", encoding="utf-8")
+        manifest = self.store.validate(self.store.manifest_ref("step10", "audit"))
+        self.assertEqual(manifest["generation"], 1)
+
+    def test_lab_count_units_and_plus_minus_are_portable(self):
+        values = {"units": ["#/hpf", "#/lpf", "#/uL", "+/-"]}
+        self.assertEqual(portable(values), values)
+        self.assertEqual(portable(json.dumps(values)), json.dumps(values))
+        with self.assertRaises(PipelineError):
+            portable(chr(47) + "outside/file")
+
     def test_compound_medication_names_do_not_mask_absolute_paths(self):
         value = {"medication": "compound 2%/ingredient 0.5%"}
         self.assertEqual(portable(value), value)

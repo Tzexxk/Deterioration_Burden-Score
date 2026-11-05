@@ -49,11 +49,13 @@ def portable(value):
         for item in value:
             portable(item)
     elif isinstance(value, str):
-        # Percent/slash is also used inside compound medication names.
+        # Clinical text includes count units, +/- and raw slash-number results.
+        # Actual file references still pass relative(), which forbids every leading slash.
         absolute = re.search(
             r"(?<![A-Za-z0-9/:])(?:[A-Za-z]:[\\/]|\\\\[^\\\s]+\\)"
-            r"|(?<![A-Za-z0-9/:%])/(?!/)[A-Za-z0-9_.-]+", value)
-        require(not absolute and not value.startswith(("/", "\\")),
+            r"|(?<![A-Za-z0-9/:%#+])/(?!/|[0-9]+\.(?=$|[\s,\x22\x27\]}]))[A-Za-z0-9_.-]+", value)
+        slash_number = re.fullmatch(r"/[0-9]+\.", value)
+        require(not absolute and (not value.startswith(("/", "\\")) or slash_number),
                 "ABSOLUTE_PATH_FORBIDDEN", "Serialized values must use portable paths")
     return value
 
