@@ -82,6 +82,16 @@ def load_model_config(layout, path, required=()):
     return value
 
 
+
+def load_utility_config(layout, path):
+    target = layout.path("project", relative(path))
+    require(target.is_relative_to(layout.path("project", "configs/utils")) and target.suffix == ".json",
+            "INVALID_UTILITY_CONFIG", "Utility configuration must be a JSON file in configs/utils")
+    value = portable(read_json(target))
+    require(isinstance(value, dict), "INVALID_CONFIG", "Utility configuration must be an object")
+    return value
+
+
 def add_data_arguments(parser):
     parser.add_argument("--version", type=int, required=True, help="Raw-data version v")
     parser.add_argument("--run", type=int, required=True, help="Data-processing run r")

@@ -6,7 +6,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from src.common.csv_io import CSV_TAIL_COLUMNS, _check_csv_tail
-from src.common.paths import portable, require
+from src.common.paths import portable, portable_evidence, require
 
 
 def reference(path, layout):
@@ -71,7 +71,12 @@ class PortableWriter:
         self.writer.writeheader()
 
     def writerow(self, row):
-        self.writer.writerow(portable_value(row, self.layout))
+        if set(CSV_TAIL_COLUMNS) <= set(self.writer.fieldnames):
+            quoted = {key: row[key] for key in ("header_text", "last_line_text") if key in row}
+            metadata = portable_value({key: value for key, value in row.items() if key not in quoted}, self.layout)
+            self.writer.writerow(portable_evidence({**metadata, **quoted}, source_text_fields=tuple(quoted)))
+        else:
+            self.writer.writerow(portable_value(row, self.layout))
 
 
 def write_csv(path, columns, rows, *, layout):

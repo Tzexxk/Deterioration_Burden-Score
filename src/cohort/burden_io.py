@@ -18,7 +18,7 @@ import pyarrow.parquet as pq
 from src.cohort.burden_support import AuditWorkspace
 from src.cohort.raw_io import _progress, _under_root
 from src.common.csv_io import _check_csv_tail, _validate_csv_rejects
-from src.common.paths import PipelineError, portable
+from src.common.paths import PipelineError, portable, portable_evidence
 
 COMPONENTS = (
     "new_icu_ccu_transfer",
@@ -51,6 +51,14 @@ TABLE_COLUMNS = {
     "drug_type drug route",
 }
 
+
+SUPPLEMENTARY_COLUMNS = {
+    "icustays": "first_careunit last_careunit",
+    "emar_detail": "pharmacy_id product_code product_description "
+    "product_description_other infusion_rate_unit dose_given_unit",
+    "prescriptions": "formulary_drug_cd gsn ndc prod_strength form_rx "
+    "dose_val_rx dose_unit_rx form_val_disp form_unit_disp",
+}
 
 def clinical_time(value: Any) -> datetime | None:
     """Reject date-only and timezone-aware values; never silently strip offsets."""
@@ -148,6 +156,7 @@ def ingest(
     settings: dict,
     matches: list[dict],
     run: AuditWorkspace | None = None,
+    *, review_policy="lenient",
 ) -> dict:
     """Project CSVs into disk tables; keep complete candidate-admission history."""
     connection.register(
@@ -172,6 +181,8 @@ def ingest(
         with path.open(encoding="utf-8-sig", newline="") as stream:
             header = next(csv.reader(stream), [])
         required = columns.split()
+        if review_policy == "strict":
+            required += SUPPLEMENTARY_COLUMNS.get(name, "").split()
         if len(header) != len(set(header)) or set(required) - set(header):
             raise ValueError(f"Missing or duplicate V2 columns in {name}")
         paths[name] = path
@@ -179,6 +190,12 @@ def ingest(
             condition = "true"
         elif name == "emar_detail":
             condition = "EXISTS (SELECT 1 FROM emar e WHERE e.emar_id = r.emar_id)"
+        elif name in {"pharmacy", "prescriptions"} and review_policy == "strict":
+            condition = (
+                "(trim(r.subject_id),trim(r.hadm_id),trim(r.pharmacy_id)) IN "
+                "(SELECT trim(subject_id),trim(hadm_id),trim(pharmacy_id) FROM emar "
+                "WHERE coalesce(trim(pharmacy_id),'')<>'')"
+            )
         elif name in {"pharmacy", "prescriptions"}:
             condition = (
                 "EXISTS (SELECT 1 FROM emar e WHERE coalesce(trim(e.medication),'')='' "
@@ -212,7 +229,7 @@ def ingest(
                 condition += " AND (r.itemid = '220277' OR r.itemid IN "
                 condition += "(SELECT itemid FROM d_items WHERE linksto='chartevents' "
                 condition += "AND regexp_matches(lower(label), "
-                condition += "'airway|intubation|ventilat')) )"
+                condition += ("'airway|intubation|ventilat|(^|[^a-z])ett([^a-z]|$)|o2 delivery device|extubat')) )" if review_policy == "strict" else "'airway|intubation|ventilat')) )")
         projection = ", ".join(f'r."{col}"' for col in required)
         with _progress(f"Read V2 {name}", unit="table", total=1) as progress:
             try:
@@ -328,6 +345,7 @@ def schema_for(columns: Sequence[str]) -> pa.Schema:
                 "procedure_source_available",
                 "qualifies",
                 "automated_qualifies",
+                "blocks_event",
                 "event_flag",
             }
         ):
@@ -363,7 +381,8 @@ class ParquetSink:
         if values:
             if self.writer is None:
                 raise ValueError("Cannot write to a closed Parquet sink")
-            portable(values)
+            for row in values:
+                portable_evidence(row)
             self.writer.write_table(pa.Table.from_pylist(values, schema=self.schema))
             self.count += len(values)
 

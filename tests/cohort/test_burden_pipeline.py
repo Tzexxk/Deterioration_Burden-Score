@@ -117,12 +117,12 @@ class BurdenPipelineTests(unittest.TestCase):
         self.assertEqual(rows["p2_h20_s200"]["burden_score"], 0)
         self.assertEqual(rows["p2_h20_s200"]["early_discharge"], 1)
 
-    def test_policy_mismatch_and_unimplemented_strict_are_rejected(self):
+    def test_policy_mismatch_and_missing_strict_sources_are_rejected(self):
         self.error("REVIEW_POLICY_MISMATCH", lambda: audit_burden_labels(self.context, review_policy="strict"))
         value = json.loads(self.rules_path.read_text(encoding="utf-8"))
         value["review_policy"] = "strict"
         write_json(self.rules_path, value)
-        self.error("UNSUPPORTED_REVIEW_POLICY", lambda: audit_burden_labels(self.context, review_policy="strict"))
+        self.error("MISSING_CONFIG_FIELD", lambda: audit_burden_labels(self.context, review_policy="strict"))
         self.assertFalse(self.context.layout.resolve(self.ref).exists())
 
     def test_missing_policy_and_cross_run_review_are_rejected(self):

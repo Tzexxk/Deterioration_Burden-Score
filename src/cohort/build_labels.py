@@ -34,7 +34,7 @@ def frozen_inputs(context, store):
             and frozen["details"].get("audit_generation") == prior["generation"],
             "INVALID_ENDPOINT_DECISION", "Decision must bind the current audit generation")
     policy = decision.get("review_policy")
-    require(policy == "lenient" and all(m["details"].get("review_policy") == policy for m in (prior, frozen)),
+    require(policy in {"lenient", "strict"} and all(m["details"].get("review_policy") == policy for m in (prior, frozen)),
             "REVIEW_POLICY_MISMATCH", "Use a supported and consistently frozen review policy")
     require(all(isinstance(decision.get(k), str) and decision[k].strip()
                 for k in ("decision_version", "reviewer", "reviewed_on", "rationale")),
@@ -181,7 +181,7 @@ def build_burden_labels(context):
             settings = snapshot["ehr"]["burden_v2"]
             with open_store(Path(scratch), settings["memory_limit"],
                             max_temp_directory_size=settings["max_temp_directory_size"]) as connection:
-                counts = validate_labels(connection, artifacts, 72)
+                counts = validate_labels(connection, artifacts, 72, review_policy=decision["review_policy"])
                 require(counts == decision["counts"] == frozen["details"]["counts"],
                         "LABEL_COUNT_MISMATCH", "Reconstructed labels differ from the frozen decision")
                 summaries = _publish_tables(connection, run, context, decision, prior, frozen)

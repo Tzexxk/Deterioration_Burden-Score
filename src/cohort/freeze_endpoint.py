@@ -166,7 +166,7 @@ def freeze_endpoint(
                 ehr["burden_v2"]["memory_limit"],
                 max_temp_directory_size=ehr["burden_v2"]["max_temp_directory_size"],
             ) as connection:
-                counts = validate_labels(connection, artifacts, 72)
+                counts = validate_labels(connection, artifacts, 72, review_policy=policy)
         require(
             store.validate(audit_ref)["generation"] == review["audit_generation"],
             "REVIEW_GENERATION_MISMATCH",

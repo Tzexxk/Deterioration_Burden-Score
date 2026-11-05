@@ -1,0 +1,31 @@
+{
+  "burden_v2": {
+    "memory_limit": "2GB",
+    "tables": {
+      "patients": "hosp/patients.csv",
+      "admissions": "hosp/admissions.csv",
+      "transfers": "hosp/transfers.csv",
+      "icustays": "icu/icustays.csv",
+      "d_items": "icu/d_items.csv",
+      "procedureevents": "icu/procedureevents.csv",
+      "chartevents": "icu/chartevents.csv",
+      "emar": "hosp/emar.csv",
+      "emar_detail": "hosp/emar_detail.csv",
+      "pharmacy": "hosp/pharmacy.csv",
+      "prescriptions": "hosp/prescriptions.csv"
+    },
+    "workspace_estimate_bytes": 8589934592,
+    "max_temp_directory_size": "4GB",
+    "review_evidence_sources": {
+      "inputevents_full": "icu/inputevents.csv",
+      "ingredientevents_full": "icu/ingredientevents.csv",
+      "poe_full": "hosp/poe.csv",
+      "poe_detail_full": "hosp/poe_detail.csv",
+      "pharmacy_full": "hosp/pharmacy.csv",
+      "prescriptions_full": "hosp/prescriptions.csv",
+      "emar_full": "hosp/emar.csv",
+      "emar_detail_full": "hosp/emar_detail.csv",
+      "discharge_notes_full": "note/discharge.csv"
+    }
+  }
+}

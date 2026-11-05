@@ -282,7 +282,10 @@ def ventilation_episodes(context: dict, rules: dict) -> tuple[list[dict], list[d
     return merged, rejected
 
 
-def ventilation_evidence(study: dict, context: dict) -> list[dict]:
+def ventilation_evidence(study: dict, context: dict, *, review_policy="lenient") -> list[dict]:
+    if review_policy == "strict":
+        from src.cohort.strict_events import ventilation_evidence as strict_rule
+        return strict_rule(study, context)
     result = []
     for row in context["ventilation_episodes"] + context["ventilation_rejected"]:
         start, end = row["start"], row["end"]
@@ -336,6 +339,9 @@ def ventilation_evidence(study: dict, context: dict) -> list[dict]:
 
 
 def hypoxemia_evidence(study: dict, context: dict, rules: dict) -> list[dict]:
+    if rules.get("review_policy", "lenient") == "strict":
+        from src.cohort.strict_events import hypoxemia_evidence as strict_rule
+        return strict_rule(study, context, rules)
     records = deduplicate(
         "chartevents",
         [row for row in context["chartevents"] if str(row["itemid"]) == "220277"],
@@ -432,6 +438,9 @@ def hypoxemia_evidence(study: dict, context: dict, rules: dict) -> list[dict]:
 
 def medication_identity(row: dict, sources: dict, rules: dict) -> None:
     """Supplement blank names with one exact source row, pharmacy before prescriptions."""
+    if rules.get("review_policy", "lenient") == "strict":
+        from src.cohort.strict_events import medication_identity as strict_rule
+        return strict_rule(row, sources, rules)
     name = (row.get("medication") or "").strip()
     row.update(
         resolved_medication=name,
@@ -479,6 +488,9 @@ def medication_identity(row: dict, sources: dict, rules: dict) -> None:
 def aggregate_medications(
     context: dict, detail_rows: list[dict], rules: dict
 ) -> list[dict]:
+    if rules.get("review_policy", "lenient") == "strict":
+        from src.cohort.strict_events import aggregate_medications as strict_rule
+        return strict_rule(context, detail_rows, rules)
     details = defaultdict(list)
     for row in detail_rows:
         details[row["emar_id"]].append(row)
@@ -661,7 +673,10 @@ def aggregate_medications(
     return events
 
 
-def infusion_evidence(study: dict, context: dict) -> list[dict]:
+def infusion_evidence(study: dict, context: dict, *, review_policy="lenient") -> list[dict]:
+    if review_policy == "strict":
+        from src.cohort.strict_events import infusion_evidence as strict_rule
+        return strict_rule(study, context)
     result, baseline = [], {}
     for row in context["medication_events"]:
         time, drug = row["time"], row["canonical_drug"]
@@ -739,8 +754,11 @@ def death_evidence(study: dict, context: dict) -> list[dict]:
 
 
 def apply_override(
-    study: dict, component: str, values: list[dict], override: dict
+    study: dict, component: str, values: list[dict], override: dict, *, review_policy="lenient"
 ) -> None:
+    if review_policy == "strict":
+        from src.cohort.strict_events import apply_override as strict_rule
+        return strict_rule(study, component, values, override)
     if (
         not override.get("reviewer")
         or not override.get("rationale")
@@ -857,6 +875,9 @@ def apply_override(
 def evaluate(
     study: dict, context: dict, rules: dict, overrides: dict
 ) -> tuple[dict, list[dict]]:
+    if rules.get("review_policy", "lenient") == "strict":
+        from src.cohort.strict_events import evaluate as strict_rule
+        return strict_rule(study, context, rules, overrides)
     if study["observation_end"] is None or study["candidate_status"] == "excluded":
         values = []
     else:

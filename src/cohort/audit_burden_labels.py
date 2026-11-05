@@ -101,11 +101,6 @@ def select_policy(cohort, requested=None):
         "REVIEW_POLICY_MISMATCH",
         "Command and configuration review policies differ",
     )
-    require(
-        policy == "lenient",
-        "UNSUPPORTED_REVIEW_POLICY",
-        "strict is not implemented yet; no fallback is permitted",
-    )
     return policy
 
 
@@ -276,13 +271,17 @@ def medication_identity_exclusion(
     policy = rules.get(IDENTITY_POLICY, {})
     if not policy.get("confirmed") or candidate["candidate_status"] != "eligible":
         return (None, [])
-    triggers = [
-        row
-        for horizon in (72,)
-        for row in infusion_evidence(observation(candidate, horizon), context)
-        if row["qualifies"] is None
-        and row["exclusion_reason"] == "unconfirmed_medication_name"
-    ]
+    triggers = []
+    strict = rules.get("review_policy") == "strict"
+    for horizon in (72,):
+        study = observation(candidate, horizon)
+        records = infusion_evidence(study, context, review_policy=rules.get("review_policy", "lenient"))
+        if strict:
+            from src.cohort.strict_events import classify_uncertainty
+            classify_uncertainty(study, records)
+        triggers += [row for row in records if row["qualifies"] is None
+                     and (not strict or row["blocks_event"])
+                     and row["exclusion_reason"] == "unconfirmed_medication_name"]
     if not triggers:
         return (None, [])
     keys = sorted(
@@ -720,6 +719,7 @@ def reports(
     directory: Path,
     data_dir: Path,
     dictionary_status: tuple[bool, bool],
+    review_policy="lenient",
 ) -> dict:
     wide_paths = [
         str(run.files[data_dir / f"window_{h}h/study_event_audit.parquet"])
@@ -987,6 +987,7 @@ def reports(
         directory / "review_sample.csv",
         "SELECT * EXCLUDE (review_rank) FROM (SELECT *, row_number() OVER (PARTITION BY horizon_hours,component,event_status ORDER BY sample_id,source_record_key) AS review_rank FROM evidence) WHERE review_rank<=20 ORDER BY horizon_hours,component,event_status,review_rank",
     )
+    blocking = "qualifies IS NULL AND blocks_event=1" if review_policy == "strict" else "qualifies IS NULL"
     bad = connection.execute(
         f"SELECT count(*) FROM wide WHERE label_status='complete' AND (burden_score <> T+2*R+2*C+3*D OR burden_score NOT BETWEEN 0 AND 8 OR T<>greatest({COMPONENTS[0]},{COMPONENTS[1]}) OR R<>greatest({COMPONENTS[2]},{COMPONENTS[3]}) OR C<>{COMPONENTS[4]} OR D<>{COMPONENTS[5]} OR phys_death<>cast(R=1 OR C=1 OR D=1 AS INTEGER) OR high_burden<>cast(burden_score>=3 AS INTEGER) OR candidate_status<>'eligible')"
     ).fetchall()[0][0]
@@ -997,7 +998,7 @@ def reports(
         raise ValueError("Audit score or positive-event boundary validation failed")
     for component in COMPONENTS:
         inconsistent = connection.execute(
-            f"WITH decisions AS (SELECT sample_id,horizon_hours,bool_or(qualifies IS NULL) pending,coalesce(max(qualifies),0) event_flag,min(first_event_time) FILTER (WHERE qualifies=1) first_time FROM evidence WHERE component=? GROUP BY sample_id,horizon_hours) SELECT count(*) FROM wide w LEFT JOIN decisions d USING(sample_id,horizon_hours) WHERE candidate_status<>'excluded' AND observation_end IS NOT NULL AND (w.{component} IS DISTINCT FROM (CASE WHEN coalesce(d.pending,false) THEN NULL ELSE coalesce(d.event_flag,0) END) OR w.{component}_first_event_time IS DISTINCT FROM (CASE WHEN coalesce(d.pending,false) THEN NULL ELSE d.first_time END))",
+            f"WITH decisions AS (SELECT sample_id,horizon_hours,bool_or({blocking}) pending,coalesce(max(qualifies),0) event_flag,min(first_event_time) FILTER (WHERE qualifies=1) first_time FROM evidence WHERE component=? GROUP BY sample_id,horizon_hours) SELECT count(*) FROM wide w LEFT JOIN decisions d USING(sample_id,horizon_hours) WHERE candidate_status<>'excluded' AND observation_end IS NOT NULL AND (w.{component} IS DISTINCT FROM (CASE WHEN coalesce(d.pending,false) THEN NULL ELSE coalesce(d.event_flag,0) END) OR w.{component}_first_event_time IS DISTINCT FROM (CASE WHEN coalesce(d.pending,false) THEN NULL ELSE d.first_time END))",
             [component],
         ).fetchall()[0][0]
         if inconsistent:
@@ -1014,7 +1015,7 @@ def reports(
             "SELECT horizon_hours,label_status,count(*) n FROM wide GROUP BY horizon_hours,label_status ORDER BY ALL",
         ),
         "unresolved_evidence_count": connection.execute(
-            "SELECT count(*) FROM evidence WHERE qualifies IS NULL"
+            f"SELECT count(*) FROM evidence WHERE {blocking}"
         ).fetchall()[0][0],
     }
 
@@ -1035,12 +1036,26 @@ def audit_burden_labels(
     imaging = data_context.read(imaging_path, required=("raw_audit",))
     cohort_file = data_context.layout.resolve(data_context.config_ref(cohort_path))
     policy = select_policy(cohort, review_policy)
-    rules = validate_rules(cohort, ehr, imaging)
+    rules = {**validate_rules(cohort, ehr, imaging), "review_policy": policy}
     require(
         not rules.get("supplementary_audit"),
         "UNSUPPORTED_REVIEW_POLICY",
-        "Supplementary processing is not implemented for lenient",
+        "Historical supplementary_audit scope is not a review policy; remove this setting",
     )
+    strict = policy == "strict"
+    evidence_columns, wide_columns = EVIDENCE_COLUMNS, WIDE_COLUMNS
+    identity_exclusion_columns = IDENTITY_EXCLUSION_COLUMNS
+    review_sources = {}
+    if strict:
+        from src.cohort import strict_events
+        from src.cohort.strict_sources import review_source_paths
+        require("review_evidence_sources" in ehr["burden_v2"], "MISSING_CONFIG_FIELD", "strict requires explicit review_evidence_sources")
+        require(all(rules.get(field) is None for field in ("overrides_path", "candidate_exclusions_path")),
+                "INVALID_REVIEW_SCOPE", "Strict uses cohort_decisions_path and event_decisions_path, not legacy override files")
+        evidence_columns = strict_events.EVIDENCE_COLUMNS
+        wide_columns = list(dict.fromkeys(OBSERVATION_COLUMNS + strict_events.EVENT_COLUMNS))
+        identity_exclusion_columns = evidence_columns + IDENTITY_EXCLUSION_COLUMNS[len(EVIDENCE_COLUMNS):]
+        review_sources = review_source_paths(data_context, ehr["burden_v2"])
     iv = data_context.layout.roots.get("mimic_iv")
     cxr = data_context.layout.roots.get("mimic_cxr")
     require(
@@ -1065,6 +1080,8 @@ def audit_burden_labels(
 
     override_path = review_path("overrides_path")
     candidate_exclusions_path = review_path("candidate_exclusions_path")
+    cohort_decisions_path = review_path("cohort_decisions_path") if strict else None
+    event_decisions_path = review_path("event_decisions_path") if strict else None
     config_refs = [
         data_context.config_ref(name) for name in (cohort_path, ehr_path, imaging_path)
     ]
@@ -1072,7 +1089,7 @@ def audit_burden_labels(
         data_context.layout.ref(
             "project", p.relative_to(data_context.layout.project).as_posix()
         )
-        for p in (override_path, candidate_exclusions_path)
+        for p in (override_path, candidate_exclusions_path, cohort_decisions_path, event_decisions_path)
         if p
     ]
     source_names = ehr["burden_v2"]["tables"]
@@ -1119,7 +1136,7 @@ def audit_burden_labels(
             configs=config_refs,
             details=details,
             required_bytes=estimated,
-            data_files=DATA_ARTIFACTS,
+            data_files=DATA_ARTIFACTS + (("review_source_records.parquet",) if strict else ()),
         ) as work,
         ExitStack() as stack,
     ):
@@ -1145,6 +1162,24 @@ def audit_burden_labels(
             if candidate_exclusions_path
             else None,
         )
+        strict_cohort, strict_event_reviews = [], []
+        strict_cohort_by_sample, strict_event_by_sample = defaultdict(list), defaultdict(list)
+        inactive_events, active_pending = [], {"cohort": 0, "event": 0}
+        archive = None
+        if strict:
+            from src.cohort.strict_reviews import load_decisions, prepare_archive
+            strict_cohort = load_decisions(cohort_decisions_path, data_context, False, run.check_csv(cohort_decisions_path) if cohort_decisions_path else None)
+            strict_event_reviews = load_decisions(event_decisions_path, data_context, True, run.check_csv(event_decisions_path) if event_decisions_path else None)
+            require(all(row["sample_id"] in sample_ids for row in strict_cohort+strict_event_reviews), "INVALID_REVIEW_TARGET", "Review target is not a matched candidate")
+            required = {identifier(row["source_audit_generation"]) for row in strict_cohort+strict_event_reviews}
+            archive = prepare_archive(data_context, store, work, required, generation)
+            overrides = defaultdict(list)
+            for row in strict_cohort:
+                strict_cohort_by_sample[row["sample_id"]].append(row)
+            for row in strict_event_reviews:
+                strict_event_by_sample[row["sample_id"]].append(row)
+                if row["decision"] != "pending":
+                    overrides[row["sample_id"],72,row["component"]].append(row)
         write_json(
             run.path(audit_dir / "effective_configuration.json"),
             {
@@ -1154,8 +1189,8 @@ def audit_burden_labels(
                 "cohort": cohort,
                 "ehr": ehr,
                 "imaging": imaging,
-                "event_reviews": list(overrides.values()),
-                "candidate_reviews": list(candidate_exclusions.values()),
+                "event_reviews": strict_event_reviews if strict else list(overrides.values()),
+                "candidate_reviews": strict_cohort if strict else list(candidate_exclusions.values()),
             },
         )
         scratch = Path(
@@ -1175,7 +1210,11 @@ def audit_burden_labels(
             max_temp_directory_size=spill_limit,
         )
         stack.callback(connection.close)
-        ingest(connection, iv, ehr["burden_v2"], matches, run)
+        ingest(connection, iv, ehr["burden_v2"], matches, run, review_policy=policy)
+        review_bindings = {}
+        if strict:
+            from src.cohort.strict_sources import ingest_review_sources
+            review_bindings = ingest_review_sources(connection, review_sources, run)
         for table, field in (
             ("admissions", "hadm_id"),
             ("patients", "subject_id"),
@@ -1214,7 +1253,7 @@ def audit_burden_labels(
             )
         )
         identity_exclusions_writer = csv.DictWriter(
-            identity_exclusions_stream, fieldnames=IDENTITY_EXCLUSION_COLUMNS
+            identity_exclusions_stream, fieldnames=identity_exclusion_columns
         )
         identity_exclusions_writer.writeheader()
         interval_counts = dict(
@@ -1244,6 +1283,9 @@ def audit_burden_labels(
                 "raw_evidence",
             ],
         )
+        review_sink = sink("review_sources", data_dir / "review_source_records.parquet",
+                           "subject_id hadm_id source_file source_record_key raw_evidence".split()) if strict else None
+        chart_item_labels = dict(connection.execute("SELECT itemid,label FROM d_items").fetchall()) if strict else {}
         for horizon in (72,):
             base = data_dir / f"window_{horizon}h"
             sink(
@@ -1251,9 +1293,9 @@ def audit_burden_labels(
                 base / "candidate_observation.parquet",
                 OBSERVATION_COLUMNS,
             )
-            sink(f"wide_{horizon}", base / "study_event_audit.parquet", WIDE_COLUMNS)
+            sink(f"wide_{horizon}", base / "study_event_audit.parquet", wide_columns)
             sink(
-                f"evidence_{horizon}", base / "event_evidence.parquet", EVIDENCE_COLUMNS
+                f"evidence_{horizon}", base / "event_evidence.parquet", evidence_columns
             )
         detail_files = {
             "transfer_events": COMPONENTS[:2],
@@ -1262,7 +1304,7 @@ def audit_burden_labels(
             "death_events": (COMPONENTS[5],),
         }
         for name in detail_files:
-            sink(name, data_dir / f"{name}.parquet", EVIDENCE_COLUMNS)
+            sink(name, data_dir / f"{name}.parquet", evidence_columns)
         episode_columns = "subject_id hadm_id source_record_key source_record_keys episode_start episode_end exclusion_reason raw_evidence".split()
         medication_columns = "subject_id hadm_id emar_id source_record_key source_record_keys event_time canonical_drug action exclusion_reason raw_evidence".split()
         sink("episodes", data_dir / "ventilation_episodes.parquet", episode_columns)
@@ -1302,6 +1344,8 @@ def audit_burden_labels(
                     "admission": admission,
                     "admissions": admissions,
                     "source_names": source_names,
+                    "chart_item_labels": chart_item_labels,
+                    "patient": patient,
                 }
                 for table in (
                     "transfers",
@@ -1349,6 +1393,14 @@ def audit_burden_labels(
                                 or row["ends_after_discharge"]
                             )
                         )
+                if strict:
+                    from src.cohort.strict_sources import review_records
+                    context["review_records"] = review_records(connection, review_sources, subject, hadm)
+                    review_sink.write([
+                        {"subject_id": identifier(row["subject_id"]), "hadm_id": identifier(row["hadm_id"]), "source_file": row["source_record_key"].split(":",1)[0],
+                         "source_record_key": row["source_record_key"], "raw_evidence": json.dumps(row,sort_keys=True,default=str)}
+                        for row in context["review_records"]
+                    ])
                 context["ventilation_episodes"], context["ventilation_rejected"] = (
                     ventilation_episodes(context, rules)
                 )
@@ -1442,6 +1494,7 @@ def audit_burden_labels(
                         for key, values in sorted(medications.items())
                     ]
                 )
+                current_index = None
                 for match in sorted(studies, key=lambda row: row["study_id"]):
                     if any(
                         (
@@ -1463,6 +1516,35 @@ def audit_burden_labels(
                         rules,
                         _under_root(cxr, selection["dicom_path"]).is_file(),
                     )
+                    resolved = set()
+                    manual_exclusion = None
+                    pending_cohort = []
+                    pending_events = []
+                    if strict:
+                        from src.cohort.strict_reviews import (
+                            cohort_decisions,
+                            current_records,
+                            raw_source_index,
+                        )
+                        cohort_rows = strict_cohort_by_sample[candidate["sample_id"]]
+                        event_rows = strict_event_by_sample[candidate["sample_id"]]
+                        final_cohort = [row for row in cohort_rows if row["decision"] != "pending"]
+                        explicit_exclusion = any(row["decision"] == "exclude" for row in final_cohort)
+                        bound = final_cohort + [row for row in event_rows if row["decision"] != "pending" and not explicit_exclusion]
+                        if bound:
+                            if current_index is None:
+                                current_index = raw_source_index(current_records(context))
+                            for row in bound:
+                                archive.bind(row,candidate,current_index,rules,versions,review_bindings,
+                                             [upstream["selection"],upstream["matches"]])
+                        resolved, manual_exclusion = cohort_decisions(candidate, final_cohort)
+                        if explicit_exclusion:
+                            inactive_events.extend(event_rows)
+                        else:
+                            pending_events = [row for row in event_rows if row["decision"] == "pending"]
+                            pending_cohort = [row for row in cohort_rows if row["decision"] == "pending"]
+                            active_pending["cohort"] += len(pending_cohort)
+                            active_pending["event"] += len(pending_events)
                     candidate_sources = [
                         ("admissions", record_key("admissions", admission), admission),
                         ("patients", record_key("patients", patient), patient),
@@ -1475,12 +1557,14 @@ def audit_burden_labels(
                         ("icustays", row["source_record_key"], row)
                         for row in context["stays"]
                     ]
-                    exclusion = candidate_exclusions.get(candidate["sample_id"])
-                    exclusion_source = candidate_exclusions_path
+                    exclusion = manual_exclusion if strict else candidate_exclusions.get(candidate["sample_id"])
+                    exclusion_source = cohort_decisions_path if manual_exclusion else candidate_exclusions_path
                     if not exclusion:
                         exclusion = candidate_conflict_exclusion(
                             candidate, context, rules
                         )
+                        if exclusion and exclusion["reason"] in resolved:
+                            exclusion = None
                         if exclusion:
                             exclusion_source = cohort_file
                             policy_exclusion_count += 1
@@ -1488,6 +1572,8 @@ def audit_burden_labels(
                         exclusion, triggers = medication_identity_exclusion(
                             candidate, context, rules
                         )
+                        if exclusion and exclusion["reason"] in resolved:
+                            exclusion = None
                         if exclusion:
                             exclusion_source = cohort_file
                             identity_exclusion_count += 1
@@ -1580,10 +1666,10 @@ def audit_burden_labels(
                             for _, key, raw in candidate_sources
                             if raw.get("reason") != "other_admission"
                         }
-                        if not cited <= available:
-                            raise ValueError(
-                                "Candidate exclusion cites unavailable source keys"
-                            )
+                        if strict and manual_exclusion:
+                            candidate_sources.extend((key.split(":",1)[0],key,current_index[key]["raw"]) for key in cited-available)
+                        elif not cited <= available:
+                            raise ValueError("Candidate exclusion cites unavailable source keys")
                         manual_key = record_key("candidate_exclusions", exclusion)
                         candidate_sources.append(
                             (
@@ -1620,6 +1706,8 @@ def audit_burden_labels(
                                 )
                             ),
                         )
+                    if pending_cohort and candidate["candidate_status"] == "eligible":
+                        candidate.update(candidate_status="needs_review", review_status="pending", exclusion_reason="pending_cohort_review")
                     candidate_sink.write([candidate])
                     referenced = set(json.loads(candidate["candidate_evidence_keys"]))
                     candidate_evidence_sink.write(
@@ -1638,7 +1726,7 @@ def audit_burden_labels(
                                     exclusion_source, data_context.layout
                                 )
                                 if table == "candidate_exclusions"
-                                else source_names[table],
+                                else source_names.get(table, table),
                                 "source_record_key": key,
                                 "raw_evidence": json.dumps(
                                     raw, sort_keys=True, default=str
@@ -1654,9 +1742,10 @@ def audit_burden_labels(
                     )
                     for horizon in (72,):
                         study = observation(candidate, horizon)
-                        values, evidence_rows = evaluate(
-                            study, context, rules, overrides
-                        )
+                        active_overrides = {} if strict and study["candidate_status"] == "excluded" else overrides
+                        if strict:
+                            context["pending_event_decisions"] = pending_events if study["candidate_status"] != "excluded" else []
+                        values, evidence_rows = evaluate(study, context, rules, active_overrides)
                         consumed_overrides |= {
                             (study["sample_id"], horizon, component)
                             for component in COMPONENTS
@@ -1700,6 +1789,7 @@ def audit_burden_labels(
             audit_dir,
             data_dir,
             (dictionaries_confirmed, handling_confirmed),
+            review_policy=policy,
         )
         connection.read_parquet(
             str(run.files[data_dir / "medication_identity_audit.parquet"])
@@ -1751,6 +1841,10 @@ def audit_burden_labels(
                 )
             )
         )
+        if strict:
+            from src.cohort.strict_sources import write_review_templates
+            write_review_templates(connection, run, audit_dir, rules, data_context, generation)
+            ready = ready and not any(active_pending.values()) and not any(row["label_status"]=="unresolved" for row in summary["label_counts"])
         metadata = {
             "csv_tail_checks": run.csv_tail_summary(),
             "data_run": data_context.key,
@@ -1828,6 +1922,17 @@ def audit_burden_labels(
             },
             **summary,
         }
+        if strict:
+            archive.write_historical_evidence()
+            metadata.update(review_evidence_sources=review_bindings, review_application_supported=True,
+                            audit_phase="strict_reviewed_evidence" if strict_cohort or strict_event_reviews else "initial_strict_evidence",
+                            review_templates="review_templates", pending_review_decisions=active_pending,
+                            inactive_event_reviews=inactive_events,
+                            review_source_generations=sorted(int(key) for key in archive.index["snapshots"]),
+                            review_evidence_binding_count=archive.checked,
+                            verified_historical_raw_key_count=len(archive.historical_keys))
+            require(all(_file_version(path) == review_bindings[name]["version"] for name,path in review_sources.items()),
+                    "SOURCE_CHANGED", "Review evidence changed during ingestion or audit")
         if any(
             (
                 _file_version(source_paths[name]) != value

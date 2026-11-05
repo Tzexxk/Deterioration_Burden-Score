@@ -183,3 +183,32 @@ def _validate_csv_rejects(path: Path, check: dict, rejects: list[tuple]) -> None
         actual, reason = ('', 'unterminated_quoted_record')
     check['skipped_rows'] = 1
     _tail_result(check, 'incomplete', actual, reason)
+
+
+
+def validate_output_text(path):
+    """Check portable metadata without interpreting quoted clinical records as paths."""
+    from .paths import portable, portable_evidence, require
+
+    with path.open(encoding="utf-8-sig", newline="") as stream:
+        if path.suffix.lower() in (".csv", ".tsv"):
+            reader = csv.DictReader(stream, delimiter="\t" if path.suffix.lower() == ".tsv" else ",", strict=True)
+            columns = reader.fieldnames or []
+            tail_report = set(CSV_TAIL_COLUMNS) <= set(columns)
+            if "raw_evidence" in columns or tail_report:
+                portable(columns)
+                require(len(columns) == len(set(columns)), "INVALID_EVIDENCE_CSV", "Duplicate evidence report columns")
+                previous = csv.field_size_limit()
+                try:
+                    # A raw note can exceed the csv module's default field limit.
+                    csv.field_size_limit(max(previous, path.stat().st_size))
+                    for row in reader:
+                        require(None not in row and all(value is not None for value in row.values()),
+                                "INVALID_EVIDENCE_CSV", "Evidence report has an incomplete record")
+                        portable_evidence(row, source_text_fields=("header_text", "last_line_text") if tail_report else ())
+                finally:
+                    csv.field_size_limit(previous)
+                return
+            stream.seek(0)
+        for line in stream:
+            portable(line)

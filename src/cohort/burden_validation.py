@@ -16,13 +16,19 @@ def _reject(connection, condition: str, message: str) -> None:
         raise ValueError(message)
 
 
-def validate_labels(connection, artifacts: dict, horizon: int) -> dict:
+def validate_labels(connection, artifacts: dict, horizon: int, *, review_policy="lenient") -> dict:
     """Reconstruct binary flags and scores from final evidence, independently of raw ingestion."""
+    strict = review_policy == "strict"
+    wide_columns, evidence_columns = WIDE_COLUMNS, EVIDENCE_COLUMNS
+    if strict:
+        from src.cohort import strict_events
+        wide_columns = list(dict.fromkeys(OBSERVATION_COLUMNS + strict_events.EVENT_COLUMNS))
+        evidence_columns = strict_events.EVIDENCE_COLUMNS
     for name, required in (
         ("candidates", CANDIDATE_COLUMNS),
         ("observations", OBSERVATION_COLUMNS),
-        ("wide", WIDE_COLUMNS),
-        ("evidence", EVIDENCE_COLUMNS),
+        ("wide", wide_columns),
+        ("evidence", evidence_columns),
     ):
         schema = pq.read_schema(artifacts[name])
         if len(schema.names) != len(set(schema.names)) or set(required) - set(
@@ -111,9 +117,14 @@ def validate_labels(connection, artifacts: dict, horizon: int) -> dict:
         f"SELECT count(*) FROM evidence WHERE component IS NULL OR component NOT IN ({allowed}) OR (qualifies IS NOT NULL AND qualifies NOT IN (0,1))",
         "Invalid evidence component or flag",
     )
+    if strict:
+        _reject(connection,
+                "SELECT count(*) FROM evidence WHERE blocks_event IS NULL OR blocks_event NOT IN (0,1) OR (qualifies IS NOT NULL AND blocks_event<>0) OR (qualifies IS NULL AND blocks_event=0 AND (uncertainty_relevance IS NULL OR uncertainty_relevance NOT IN ('independent_confirmed_low_after_recovery','independent_after_confirmed_positive','history_without_window_infusion')))",
+                "Invalid strict uncertainty classification")
+    unresolved = "(qualifies IS NULL AND blocks_event=1)" if strict else "qualifies IS NULL"
     _reject(
         connection,
-        "SELECT count(*) FROM evidence e JOIN eligible w USING(sample_id) WHERE qualifies IS NULL OR (qualifies=1 AND (event_time IS NULL OR first_event_time IS NULL OR event_time<=t0 OR event_time>observation_end OR first_event_time<=t0 OR first_event_time>observation_end))",
+        f"SELECT count(*) FROM evidence e JOIN eligible w USING(sample_id) WHERE {unresolved} OR (qualifies=1 AND (event_time IS NULL OR first_event_time IS NULL OR event_time<=t0 OR event_time>observation_end OR first_event_time<=t0 OR first_event_time>observation_end))",
         "Unresolved or out-of-window evidence",
     )
     for c in COMPONENTS:
@@ -122,6 +133,11 @@ def validate_labels(connection, artifacts: dict, horizon: int) -> dict:
             f"WITH d AS (SELECT sample_id, coalesce(max(qualifies),0) flag, min(first_event_time) FILTER(WHERE qualifies=1) first_time FROM evidence WHERE component='{c}' GROUP BY sample_id) SELECT count(*) FROM eligible w LEFT JOIN d USING(sample_id) WHERE w.{c} IS DISTINCT FROM coalesce(d.flag,0) OR w.{c}_first_event_time IS DISTINCT FROM d.first_time OR w.{c}_event_status IS NULL OR w.{c}_event_status NOT IN ('positive','preexisting_only','no_qualifying_record') OR (w.{c}=1 AND w.{c}_event_status<>'positive') OR (w.{c}=0 AND w.{c}_event_status='positive')",
             f"Evidence does not reproduce {c}",
         )
+    if strict:
+        for component in COMPONENTS:
+            _reject(connection,
+                    f"WITH times AS (SELECT sample_id,min(first_event_time) FILTER(WHERE qualifies=1) first_confirmed,min(event_time) FILTER(WHERE qualifies IS NULL) first_uncertain FROM evidence WHERE component='{component}' GROUP BY sample_id) SELECT count(*) FROM eligible w LEFT JOIN times USING(sample_id) WHERE w.{component}_first_event_time_status IS DISTINCT FROM CASE WHEN first_confirmed IS NULL THEN 'no_confirmed_event' WHEN first_uncertain<first_confirmed THEN 'earliest_confirmed_possible_earlier' ELSE 'earliest_confirmed' END",
+                    f"Strict onset-time status disagrees with {component} evidence")
     a, b, c, d, e, f = COMPONENTS
     connection.execute(
         f"CREATE VIEW recalculated AS SELECT * EXCLUDE(T,R,C,D,burden_score,phys_death,high_burden), cast(greatest({a},{b}) AS UTINYINT) T, cast(greatest({c},{d}) AS UTINYINT) R, cast({e} AS UTINYINT) C, cast({f} AS UTINYINT) D FROM eligible"

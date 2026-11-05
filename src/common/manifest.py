@@ -10,6 +10,8 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 
+from .config import load_utility_config
+from .csv_io import validate_output_text
 from .paths import (
     PipelineError,
     identifier,
@@ -239,7 +241,7 @@ class ManifestStore:
     @contextmanager
     def publish(self, stage, phase, *, inputs=(), configs=(), area=None,
                 destination=None, action="generated", origin=None, details=None, required_bytes=0,
-                data_files=(), data_directories=()):
+                data_files=(), data_directories=(), utility_configs=()):
         ref = self.manifest_ref(stage, phase, area=area, destination=destination)
         dest = self.layout.resolve(ref).parent
         state_path = self.control / f"{stage}.{phase}.state.json"
@@ -269,6 +271,10 @@ class ManifestStore:
                     require(item["root"] == "project" and config_path.is_relative_to(self.layout.path("project", "configs/models")),
                             "INVALID_MODEL_CONFIG", "Model configuration must belong to configs/models")
                     portable(config_path.read_text(encoding="utf-8-sig"))
+            for item in utility_configs:
+                self.layout.resolve(item)
+                require(item["root"] == "project", "INVALID_UTILITY_CONFIG", "Utility configuration must use the project root")
+                load_utility_config(self.layout, item["path"])
             previous = read_json(dest / "manifest.json") if (dest / "manifest.json").exists() else {}
             require(not dest.exists() or bool(previous), "UNMANAGED_DESTINATION", "Refusing to overwrite an unmanaged directory")
             if previous:
@@ -310,9 +316,7 @@ class ManifestStore:
                     require(not output.is_symlink(), "INVALID_OUTPUT", "Symbolic links are not published")
                     if output.is_file():
                         if output.suffix.lower() in (".json", ".jsonl", ".csv", ".tsv", ".txt", ".log", ".md"):
-                            with output.open(encoding="utf-8-sig") as stream:
-                                for line in stream:
-                                    portable(line)
+                            validate_output_text(output)
                         name = output.relative_to(temp).as_posix()
                         is_data = name in data_files or any(name.startswith(folder + "/") for folder in data_directories)
                         target = targets[0] if is_data else report_target
@@ -335,7 +339,7 @@ class ManifestStore:
                 manifest = {"schema": 2, "self": ref, "scope": self.scope, "stage": stage, "phase": phase,
                             "generation": generation, "status": "complete", "state": self._ref(state_path),
                             "created_utc": datetime.now(timezone.utc).isoformat(), "inputs": bound,
-                            "configs": list(configs), "outputs": entries, "action": action,
+                            "configs": list(configs) + list(utility_configs), "outputs": entries, "action": action,
                             "origin": origin, "details": details or {}}
                 write_json(temp / "manifest.json", manifest)
                 # Data first, manifest last; consumers require the shared complete state.

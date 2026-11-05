@@ -77,6 +77,57 @@ class FoundationTests(unittest.TestCase):
                 _rename(Path("source"), Path("destination"))
         sleep.assert_not_called()
 
+    def test_quoted_clinical_evidence_keeps_text_but_metadata_and_config_paths_are_checked(self):
+        from src.common.paths import portable_evidence
+        raw = json.dumps({"record":{"product_description":"Synthetic /100mL", "text":"Synthetic /followup\n" + "x" * 140000}})
+        row = {"source_file":"mimic_iv:hosp/emar_detail.csv", "raw_evidence":raw}
+        self.assertEqual(portable_evidence(row), row)
+        with self.assertRaises(PipelineError):
+            portable(row)
+        with self.store.publish("step05","audit") as work:
+            import csv
+            with (work / "evidence.csv").open("w",encoding="utf-8",newline="") as stream:
+                writer=csv.DictWriter(stream,fieldnames=list(row))
+                writer.writeheader()
+                writer.writerow(row)
+        manifest=self.store.validate(self.store.manifest_ref("step05","audit"))
+        self.assertEqual(manifest["generation"],1)
+        unsafe={**row,"source_file":str(self.root / "source.csv")}
+        with self.assertRaises(PipelineError):
+            portable_evidence(unsafe)
+        def publish_unsafe():
+            import csv
+            with self.store.publish("step05","audit") as work:
+                with (work / "evidence.csv").open("w",encoding="utf-8",newline="") as stream:
+                    writer=csv.DictWriter(stream,fieldnames=list(unsafe))
+                    writer.writeheader()
+                    writer.writerow(unsafe)
+        self.error("ABSOLUTE_PATH_FORBIDDEN",publish_unsafe)
+        self.assertEqual((self.layout.resolve(self.store.manifest_ref("step05","audit")).parent / "evidence.csv").read_text(encoding="utf-8").count("Synthetic /100mL"),1)
+
+    def test_raw_evidence_must_remain_a_json_record(self):
+        from src.common.paths import portable_evidence
+        for value in ("not JSON", '["scalar"]', "42", '"scalar"'):
+            self.error("INVALID_RAW_EVIDENCE",lambda:portable_evidence({"raw_evidence":value}))
+
+    def test_csv_source_excerpts_do_not_exempt_actual_file_labels(self):
+        import csv
+
+        from src.common.csv_io import CSV_TAIL_COLUMNS
+        from src.common.paths import portable_evidence
+        row = dict.fromkeys(CSV_TAIL_COLUMNS, "")
+        row.update(file="mimic_iv:hosp/example.csv", header_text="product,text", last_line_text="Synthetic /100mL, /followup")
+        def publish(value):
+            with self.store.publish("step05", "audit") as work:
+                with (work / "csv_tail_checks.csv").open("w",encoding="utf-8",newline="") as stream:
+                    writer=csv.DictWriter(stream,fieldnames=CSV_TAIL_COLUMNS)
+                    writer.writeheader()
+                    writer.writerow(value)
+        publish(row)
+        self.assertEqual(self.store.validate(self.store.manifest_ref("step05","audit"))["generation"],1)
+        self.error("ABSOLUTE_PATH_FORBIDDEN",lambda:publish({**row,"file":str(self.root / "example.csv")}))
+        self.error("INVALID_SOURCE_TEXT_FIELD",lambda:portable_evidence(row,source_text_fields=("file",)))
+
     def setUp(self):
         temp_base = Path(__file__).resolve().parents[2] / "outputs/foundation_tests"
         temp_base.mkdir(parents=True, exist_ok=True)

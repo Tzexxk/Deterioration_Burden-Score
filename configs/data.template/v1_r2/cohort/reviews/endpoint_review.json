@@ -1,0 +1,14 @@
+{
+  "confirmed": false,
+  "version": 1,
+  "run": 2,
+  "audit_generation": null,
+  "review_policy": "strict",
+  "horizon_hours": 72,
+  "decision_version": "",
+  "reviewer": "",
+  "reviewed_on": "",
+  "rationale": "",
+  "rules_version": "burden_v2_audit_v19",
+  "review_records": []
+}

@@ -60,6 +60,32 @@ def portable(value):
     return value
 
 
+
+def portable_evidence(row, *, source_text_fields=()):
+    """Validate record metadata while preserving quoted source evidence verbatim.
+
+    raw_evidence is a JSON source record, not a framework path or configuration.
+    Its clinical text must not be rewritten: record keys depend on that content.
+    """
+    require(isinstance(row, dict), "INVALID_EVIDENCE", "Expected an evidence row")
+    require(set(source_text_fields) <= {"header_text", "last_line_text"},
+            "INVALID_SOURCE_TEXT_FIELD", "Only CSV source excerpts may be quoted")
+    for key in source_text_fields:
+        require(key not in row or row[key] is None or isinstance(row[key], str),
+                "INVALID_EVIDENCE", "CSV source excerpts must be text")
+    portable({key: value for key, value in row.items() if key != "raw_evidence" and key not in source_text_fields})
+    if "raw_evidence" in row and row["raw_evidence"] is not None:
+        raw = row["raw_evidence"]
+        require(isinstance(raw, str), "INVALID_RAW_EVIDENCE", "Source evidence must be a JSON record string")
+        try:
+            parsed = json.loads(raw)
+        except ValueError:
+            raise PipelineError("INVALID_RAW_EVIDENCE", "Source evidence must be valid JSON") from None
+        require(isinstance(parsed, dict) or (isinstance(parsed, list) and all(isinstance(item, dict) for item in parsed)),
+                "INVALID_RAW_EVIDENCE", "Source evidence must contain an object or record array")
+    return row
+
+
 def read_json(path):
     try:
         return json.loads(path.read_text(encoding="utf-8-sig"))

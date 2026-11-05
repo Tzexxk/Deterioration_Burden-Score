@@ -1,0 +1,4826 @@
+{
+  "sample_unit": "study",
+  "admission_matching": {
+    "admissions_path": "hosp/admissions.csv"
+  },
+  "review_policy": "strict",
+  "burden_v2": {
+    "outcome_version": "burden_v2",
+    "audit_horizons_hours": [
+      72
+    ],
+    "minimum_age": 18,
+    "rules_version": "burden_v2_audit_v19",
+    "dictionary_version": "burden_supplementary_2026_10_29_identity_v2",
+    "dictionary_handling_reviews": {
+      "careunits": {
+        "UNKNOWN": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_handling_review_2026-10-04_v1",
+          "rationale": ""
+        },
+        "Unknown": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_handling_review_2026-10-04_v1",
+          "rationale": ""
+        }
+      },
+      "medications": {
+        "": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_handling_review_2026-10-04_v1",
+          "rationale": ""
+        },
+        "bag": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_handling_review_2026-10-04_v1",
+          "rationale": ""
+        },
+        "sw": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_handling_review_2026-10-04_v1",
+          "rationale": ""
+        },
+        "0.83% sodium chloride": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "0.9% sodium chloride (excel bag)": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "0.9% sodium chloride (mini bag plus)": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "0.9% sodium chloride p.f. (syringe)": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "1": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "2": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "300 mcg vial": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "5 syringes (ns)": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "5% dextrose (excel bag)": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "acetaminophen drug": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "bottle": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "click change <--- to choose a base solution": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "coq10 (300mg)": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "d5w": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "inv-acetaminophen": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "inv-dexmedetomidine": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "iso-osmotic dextrose": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "iso-osmotic sodium chloride": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "morph": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "morphin": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "ns": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "ns syringe (intrapleural)": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "phytonadi": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "soln": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "sterile water": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "syringe": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "syringe (0.9% sodium chloride)": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "syringe (chemo)": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "syringe (iso-osmotic dextrose)": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "terlipressin": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "terlipressin ication": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "vial": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        },
+        "yellow cadd cassette": {
+          "handling_confirmed": true,
+          "handling": "preserve_unknown",
+          "reviewer": "",
+          "reviewed_on": "",
+          "version": "dictionary_unknown_handling_supplementary_2026-10-28_v1",
+          "rationale": ""
+        }
+      }
+    },
+    "careunits": {
+      "Medical Intensive Care Unit (MICU)": {
+        "care_level": "icu_ccu",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Medical/Surgical Intensive Care Unit (MICU/SICU)": {
+        "care_level": "icu_ccu",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Surgical Intensive Care Unit (SICU)": {
+        "care_level": "icu_ccu",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Cardiac Vascular Intensive Care Unit (CVICU)": {
+        "care_level": "icu_ccu",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Trauma SICU (TSICU)": {
+        "care_level": "icu_ccu",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Coronary Care Unit (CCU)": {
+        "care_level": "icu_ccu",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Neuro Surgical Intensive Care Unit (Neuro SICU)": {
+        "care_level": "icu_ccu",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Neuro Stepdown": {
+        "care_level": "stepdown_intermediate",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Observation": {
+        "care_level": "stepdown_intermediate",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Medicine": {
+        "care_level": "ward",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Med/Surg": {
+        "care_level": "ward",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Hematology/Oncology": {
+        "care_level": "ward",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Neurology": {
+        "care_level": "ward",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Medicine/Cardiology": {
+        "care_level": "ward",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Transplant": {
+        "care_level": "ward",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Med/Surg/GYN": {
+        "care_level": "ward",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Cardiac Surgery": {
+        "care_level": "ward",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Vascular": {
+        "care_level": "ward",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Med/Surg/Trauma": {
+        "care_level": "ward",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Psychiatry": {
+        "care_level": "ward",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Labor & Delivery": {
+        "care_level": "ward",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Discharge Lounge": {
+        "care_level": "other",
+        "exclude_at_t0": true,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Emergency Department": {
+        "care_level": "other",
+        "exclude_at_t0": true,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Emergency Department Observation": {
+        "care_level": "other",
+        "exclude_at_t0": true,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "PACU": {
+        "care_level": "other",
+        "exclude_at_t0": true,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "UNKNOWN": {
+        "care_level": "unknown",
+        "confirmed": false,
+        "mapping_reason": ""
+      },
+      "Unknown": {
+        "care_level": "unknown",
+        "confirmed": false,
+        "mapping_reason": ""
+      }
+    },
+    "transfer_event_actions": {
+      "ED": {
+        "action": "location",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "admit": {
+        "action": "location",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "transfer": {
+        "action": "location",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "discharge": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      }
+    },
+    "medications": {
+      "amino acids 5%-dextrose 15%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "multivitamin iv": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "trace elements": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "prismasate (b22 k4)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "prismasate (b32 k2)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sodium chloride 3% (hypertonic)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sodium chloride 0.9%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "0.9% sodium chloride": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "0.45% sodium chloride": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "dextrose 5%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "5% dextrose": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "lactated ringers": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "d5 1/2ns": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "d5ns": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "d5lr": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "potassium chl 20 meq / 1000 ml d5 1/2 ns": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "potassium chl 20 meq / 1000 ml d5ns": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "potassium chl 40 meq / 1000 ml d5 1/2 ns": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "potassium chl 20 meq / 1000 ml ns": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "potassium chl 20 meq / 1000 ml d5lr": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "potassium chl 40 meq / 1000 ml d5ns": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "norepinephrine": {
+        "canonical_drug": "norepinephrine",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "epinephrine": {
+        "canonical_drug": "epinephrine",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "vasopressin": {
+        "canonical_drug": "vasopressin",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "phenylephrine": {
+        "canonical_drug": "phenylephrine",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "dopamine": {
+        "canonical_drug": "dopamine",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "dobutamine": {
+        "canonical_drug": "dobutamine",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "phenylephrine 2.5 % ophth soln": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "epinephrine (epipen)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "racepinephrine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sodium chloride 0.9%  flush": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "heparin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "insulin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "docusate sodium": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "acetaminophen": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "hydromorphone (dilaudid)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "metoprolol tartrate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "senna": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "pantoprazole": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "furosemide": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "vancomycin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "gabapentin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "oxycodone (immediate release)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "cefepime": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fentanyl citrate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ipratropium-albuterol neb": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "aspirin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "heparin flush (10 units/ml)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "potassium chloride": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "acetaminophen iv": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "lorazepam": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "acyclovir": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "atorvastatin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "omeprazole": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "morphine sulfate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ondansetron": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "chlorhexidine gluconate 0.12% oral rinse": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "albuterol 0.083% neb soln": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "propofol": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "lidocaine 5% patch": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "potassium chloride replacement (critical care and oncology)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "multivitamins": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "levothyroxine sodium": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "famotidine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "diltiazem": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "metronidazole (flagyl)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "piperacillin-tazobactam": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "metoclopramide": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "folic acid": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "warfarin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ipratropium bromide neb": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "magnesium sulfate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "lactulose": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "enoxaparin sodium": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "polyethylene glycol": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "clonazepam": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "calcium carbonate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "metronidazole": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "albuterol inhaler": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "vitamin d": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "caphosol": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "oxycodone sr (oxycontin)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "nystatin oral suspension": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "clotrimazole": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "trazodone": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ciprofloxacin hcl": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "lisinopril": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "tamsulosin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "nicotine patch": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "thiamine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "docusate sodium (liquid)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "methylprednisolone sodium succ": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "metoprolol succinate xl": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "vancomycin oral liquid": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "levetiracetam": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "acetaminophen (liquid)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ketorolac": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ursodiol": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "bisacodyl": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "creon 12": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "glutamine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "hydralazine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ipratropium bromide mdi": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fluticasone propionate nasal": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ciprofloxacin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "magnesium sulfate replacement (critical care and oncology)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "prednisone": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "dexmedetomidine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "simethicone": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ranitidine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "pregabalin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sodium chloride": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "quetiapine fumarate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "allopurinol": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "meropenem": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "carbidopa-levodopa (25-100)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "aspirin ec": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fluticasone-salmeterol diskus (250/50)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "oxybutynin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sodium chloride nasal": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "tacrolimus": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "bupivacaine 0.1%|hydromorphone (dilaudid)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "tiotropium bromide": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "amlodipine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sertraline": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ferrous sulfate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "tramadol (ultram)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sevelamer carbonate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "midodrine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "olanzapine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "methadone": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "brimonidine tartrate 0.15% ophth.": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "clopidogrel": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "scopolamine patch": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "mupirocin ointment 2%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ceftriaxone": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "diphenhydramine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "oxycodone liquid": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "phosphorus": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "haloperidol": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "simvastatin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ampicillin-sulbactam": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "mirtazapine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ticagrelor": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "hydroxyzine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "loperamide": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "cefazolin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "digoxin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fluconazole": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "midazolam": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "amiodarone": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sodium bicarbonate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "albumin 25% (12.5g / 50ml)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "amoxicillin-clavulanic acid": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "isosorbide dinitrate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "mycophenolate mofetil": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fexofenadine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "multivitamins w/minerals": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "diazepam": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "nitroglycerin ointment  2%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "neutra-phos": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "rifaximin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sodium fluoride 1.1% (dental gel)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "azithromycin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "atenolol": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "miconazole powder 2%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "duloxetine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "belladonna & opium (16.2/30mg)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "dexamethasone": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "hydrochlorothiazide": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "lansoprazole oral disintegrating tab": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "cilostazol": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "bupivacaine 0.1%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "clindamycin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "zolpidem tartrate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "cyanocobalamin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "calcium gluconate sliding scale (critical care-ionized calcium)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "dorzolamide 2%/timolol 0.5% ophth.": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "finasteride": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "benzonatate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "clobetasol propionate 0.05% cream": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "dronabinol": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "baclofen": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "cepacol (sore throat lozenge)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "milk of magnesia": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "phenytoin sodium extended": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "isosorbide mononitrate (extended release)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "lamotrigine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "latanoprost 0.005% ophth. soln.": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "buspirone": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "calcium gluconate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ciprofloxacin 0.3% ophth soln": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "citalopram": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ibuprofen": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "labetalol": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "levofloxacin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "torsemide": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "aluminum-magnesium hydrox.-simethicone": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "erythromycin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "olanzapine (disintegrating tablet)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "octreotide acetate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "perphenazine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "spironolactone": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "bupropion": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "carvedilol": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "metformin (glucophage)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "pravastatin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "nifedipine cr": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "imipenem-cilastatin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "amitriptyline": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "nephrocaps": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "miconazole 2% cream": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "phytonadione": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "valacyclovir": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "influenza vaccine quadrivalent": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "potassium chloride (powder)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "donepezil": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ampicillin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fluticasone propionate 110mcg": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "phenobarbital": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "dorzolamide 2% ophth. soln.": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "nitroglycerin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sulfameth/trimethoprim ss": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "artificial tears": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "enalaprilat": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "amantadine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "escitalopram oxalate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "heparin (iabp)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "prednisolone acetate 1% ophth. susp.": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "timolol maleate 0.5%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "tramadol": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fluticasone-salmeterol diskus (500/50)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "pneumococcal 23-valent polysaccharide vaccine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sucralfate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "valganciclovir": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "alteplase 1mg/2ml ( clearance ie. picc, tunneled access line )": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "methylphenidate (ritalin)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sulfameth/trimethoprim ds": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "tropicamide 1 %": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "pyridoxine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "atovaquone suspension": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "losartan potassium": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "magnesium oxide": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "topiramate (topamax)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "zinc sulfate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "apixaban": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "buprenorphine-naloxone (8mg-2mg)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "bupropion (sustained release)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "bumetanide": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "cephalexin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "clotrimazole cream": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "raltegravir": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "triamcinolone acetonide 0.1% cream": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "valsartan": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "dextrose 50%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "salmeterol xinafoate diskus (50 mcg)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "captopril": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "divalproex sod. sprinkles": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "glycopyrrolate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "lidocaine jelly 2% (urojet)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "posaconazole delayed release tablet": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "acetylcysteine (iv)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "filgrastim": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fleet enema": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "montelukast": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "nitroglycerin ointment 0.2%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "dabigatran etexilate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fluoxetine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "guaifenesin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "lidocaine 1% (for picc/midline insertions)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "memantine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "nimodipine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "prochlorperazine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "diltiazem extended-release": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "hyoscyamine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "opium tincture": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "rosuvastatin calcium": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "alprazolam": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fludrocortisone acetate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "divalproex (extended release)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "loratadine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "nadolol": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "potassium phosphate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "abacavir sulfate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "clonidine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "daptomycin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "levalbuterol neb": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "morphine sulfate ir": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "propranolol": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "readi-cat 2 (barium sulfate 2% suspension)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fish oil (omega 3)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "gentamicin 0.3% ophth. soln": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "guaifenesin er": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "albumin 5% (25g / 500ml)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "calcium acetate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ceftazidime": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "pramipexole": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sarna lotion": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "cetirizine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "chloraseptic throat spray": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "dolutegravir": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "phenazopyridine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "psyllium powder": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "vitamin b complex": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "amantadine syrup": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "cyclosporine 0.05% ophth emulsion": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "calcitriol": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "doxycycline hyclate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "guaifenesin-dextromethorphan": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "isoniazid": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sodium chloride 3% inhalation soln": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "clindamycin 1% solution": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fentanyl pca": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "hydrocodone-acetaminophen (5mg-325mg)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "morphine infusion – comfort care guidelines": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "nitroglycerin sl": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "colchicine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "emtricitabine-tenofovir (truvada)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "phenobarbital alcohol withdrawal dose taper (days 2-7)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ruxolitinib": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "enalapril maleate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "guaifenesin-codeine phosphate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "hydroxyurea": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "paroxetine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sodium phosphate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sulfamethoxazole-trimethoprim": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "atropine sulfate ophth 1%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "hydrocortisone na succ.": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "morphine sr (ms contin)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "nitrofurantoin monohyd (macrobid)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "acetylcysteine 20%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "combigan": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "dexamethasone ophthalmic susp 0.1%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "nystatin cream": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "zonisamide": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "brimonidine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "bivalirudin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "busulfan": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "clonidine patch 0.2 mg/24 hr": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "diphenoxylate-atropine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fluorouracil": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "magnesium citrate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "valproic acid": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "cytarabine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "flecainide acetate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "heparin flush (100 units/ml)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "hydroxychloroquine sulfate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "mesalamine enema": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "moviprep": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "restasis": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "tetrabenazine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "cepastat (phenol) lozenge": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "clobetasol propionate 0.05% ointment": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "clozapine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "collagenase ointment": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "cyclopentolate 1%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "hydrocerin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "lamivudine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "linezolid": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "maalox/diphenhydramine/lidocaine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "risperidone": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ibrutinib": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "permethrin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "aminocaproic acid": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ferric gluconate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "megestrol acetate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "morphine sulfate (concentrated oral solution) 20 mg/ml": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "oxycodone-acetaminophen (5mg-325mg)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ranolazine er": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "tetracycline": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "venlafaxine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "venlafaxine xr": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "vitamin e": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ziprasidone hydrochloride": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "carbamide peroxide 6.5%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "dapsone": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "divalproex (delayed release)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "erythromycin 0.5% ophth oint": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fluocinonide 0.05% cream": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "lidocaine viscous 2%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "naloxone": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "oxymetazoline": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "promethazine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "rivaroxaban": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "terlipressin or placebo study medication": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "terlipressin or placebo study med": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "zenpep": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "acetaminophen-caff-butalbital": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "albumin 5% (12.5g / 250ml)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "apraclonidine 0.5%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "glucose gel": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "minocycline": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "morphine sulfate (oral solution) 2 mg/ml": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ascorbic acid": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "cefpodoxime proxetil": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "darunavir": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "methimazole": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "morphine sulfate (oral soln.)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "nafcillin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "nortriptyline": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ondansetron odt": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ritonavir": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sildenafil": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "theophylline sr": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "tolvaptan": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ropinirole": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "amphetamine salt combo": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "clarithromycin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "disopyramide phosphate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "donnatal": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fosaprepitant": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "nifedipine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "pentoxifylline": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "acetazolamide": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "amikacin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "chlorothiazide": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "cyclobenzaprine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ferrous gluconate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "insulin glargine  (cvicu protocol)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "lidocaine 1%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "pseudoephedrine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "tizanidine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "aripiprazole": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "acetylcysteine inhaled – for interventional pulmonary use only": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "alteplase": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "artificial tear ointment": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "erythromycin ethylsuccinate suspension": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "gastroview (diatrizoate meglumine & sodium)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "moxifloxacin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "propranolol la": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "tenofovir disoproxil (viread)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "tetanus-diphtox-acellular pertuss (adacel)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "albuterol sulfate (extended release)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "aluminum hydroxide suspension": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "anti-thymocyte globulin (rabbit)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "bacitracin ointment": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "daunorubicin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fluticasone-salmeterol diskus (100/50)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ganciclovir": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "glipizide xl": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ivermectin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "metformin xr (glucophage xr)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "micafungin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sacubitril-valsartan (24mg-26mg)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "silver sulfadiazine 1% cream": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sotalol": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "verapamil sr": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "emtricitabine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ertapenem sodium": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ezetimibe": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "genvoya": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "influenza virus vaccine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "meperidine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "metolazone": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "miconazole nitrate vag cream 2%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "oseltamivir": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "pancrelipase 5000": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sodium polystyrene sulfonate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "tretinoin (atra-all transretinoic acid)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ertapenem": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "alteplase 1mg/5ml ( clearance ie. indwelling port )": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "aztreonam": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fat emulsion 20%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fenofibrate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ferrous sulfate (liquid)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fludarabine phosphate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "flurbiprofen 0.03%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "hydrocortisone cream 1%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "immune globulin intravenous (human)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "incruse ellipta": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "indomethacin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "insulin (regular) for hyperkalemia": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "lactic acid 12% lotion": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "lidocaine 5% ointment": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "melphalan": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "methotrexate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "neomycin-polymyxin-bacitracin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "nicardipine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "oxycodone--acetaminophen (5mg-325mg)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "polymyxin b -trimethoprim ophth soln": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "risperidone (disintegrating tablet)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "tetracaine 0.5% ophth soln": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "theophylline er": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "glimepiride": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "alendronate sodium": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "amiloride hcl": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "calcium gluconate replacement (oncology)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "etomidate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "hydrocortisone enema": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ipratropium-albuterol inhalation spray": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "januvia": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "levetiracetam oral solution": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "neomycin sulfate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "nystatin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "prasugrel": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "protamine sulfate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "succinylcholine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "tamoxifen citrate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "timolol maleate 0.25%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "tuberculin protein": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "verapamil": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "atomoxetine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "benzoyl peroxide": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "multivitamin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "artificial tears preserv. free": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "bismuth subsalicylate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "breo ellipta": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "calcium replacement (oncology)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "crinone": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "cyclosporine (neoral) modified": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "desipramine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "desmopressin acetate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "esmolol": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fentanyl patch": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fosfomycin tromethamine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "heparin (crrt machine priming)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "infliximab": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "kcentra": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "lidocaine 2%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "meclizine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "mesalamine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "mesalamine (rectal)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "methylnaltrexone": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "neostigmine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "oxycodone-acetaminophen": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "rocuronium": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "symbicort": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "thrombin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "tolterodine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "triamterene": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "benztropine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "bacitracin ophthalmic oint": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "benadryl itch stopping": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "bicitra": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "caffeine-sodium benzoate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "chlorpromazine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "clonidine patch 0.1 mg/24 hr": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "codeine sulfate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "diazepam - ciwa protocol": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "dipyridamole-aspirin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "emtricitabine oral solution": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ethacrynic acid": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ethambutol hcl": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fleet enema (mineral oil)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "fosphenytoin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "glycopyrrolate (cvicu reversal protocol)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "golytely": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "heparin flush (1000 units/ml)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "hepatitis b vaccine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "hydrocortisone": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "hydrocortisone oint 2.5%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "irinotecan hcl": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ketamine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ketamine (for intubation)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ketorolac 0.5% ophth soln": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "lamotrigine patch for allergy testing": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "leucovorin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "levetiracetam patch for allergy testing": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "lovenox": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "maalox/lidocaine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "mannitol": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "meropenem graded challenge": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "mineral oil": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "nifedipine (extended release)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "neostigmine (cvicu reversal protocol)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "neulasta": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "niacinamide": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "oxaliiplatin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "phenobarbital - icu alcohol withdrawal (initial load / rescue dose)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "phenobarbital patch for allergy testing": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "pegfilgrastim": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "penicillin v potassium": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "phenytoin patch for allergy testing": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "phenytoin sodium (iv)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "prazosin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "psyllium wafer": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "ramelteon": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "rifampin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "silver nitrate applicator": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sodium citrate 4%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "sumatriptan succinate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "talc (sterile) + lidocaine 1%": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "triamcinolone acetonide 0.025% cream": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "valganciclovir oral solution": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "valproate sodium": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "vitamin b complex w/c": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "vitamin d3 (cholecalciferol)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "biotin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "brinzolamide": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "irbesartan": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "morphine": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "acetaminophen/ placebo study drug": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "coq10 (300mg) or placebo": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "dexmedetomidine study drug": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "esmolol study drug": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "*nf* ertapenem sodium": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      },
+      "acetazolamide sodium": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      },
+      "albumin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      },
+      "alteplase (catheter clearance)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      },
+      "ampicillin sodium": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      },
+      "centrum silver multivitamin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      },
+      "chlorothiazide sodium": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      },
+      "ciprofloxacin iv": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      },
+      "dexamethasone sod phosphate": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      },
+      "gammagard liquid": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      },
+      "heparin sodium": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      },
+      "hydromorphone": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      },
+      "insulin human regular": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      },
+      "irinotecan": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      },
+      "leucovorin calcium": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      },
+      "nicardipine iv": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      },
+      "oxaliplatin": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      },
+      "phenytoin sodium": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      },
+      "symbicort 160mcg/4.5mcg": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      },
+      "talc (sterile)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      },
+      "tetrabenazine (xenazine)": {
+        "canonical_drug": null,
+        "confirmed": false,
+        "reviewer": "",
+        "reviewed_on": "",
+        "version": "burden_supplementary_2026_10_29_identity_v2",
+        "mapping_reason": "",
+        "source_review_path": "outputs/supplementary_r02/audit/burden_v2/review_batches/stage02_identity_inventory_2026-10-29_022030/identity_mapping_proposal.json"
+      }
+    },
+    "administration_types": {
+      "IV Infusion": {
+        "action": "infusion",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Medication Infusion": {
+        "action": "infusion",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "IV Bolus": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Bolus Dose from IV Drip": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "IV Flush": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Transdermal Patch": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Insulin SC Sliding Scale": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Insulin SC Fixed Dose": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Epidural": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Heparin IV Bolus": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Heparin IV Infusion": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Insulin Infusion (IV Drip)": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "TPN": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "IV Fluid Repletion": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Standard Maintenance Medication": {
+        "action": "review",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "PCA": {
+        "action": "review",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Sliding Scale": {
+        "action": "review",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "OVR": {
+        "action": "review",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "PACU-only order": {
+        "action": "review",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "": {
+        "action": "review",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      }
+    },
+    "medication_event_actions": {
+      "Partial Administered": {
+        "action": "given",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Not Stopped": {
+        "action": "continue",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Applied": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Applied in Other Location": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Not Applied": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Delayed Not Applied": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Removed": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Removed in Other Location": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Removed Existing / Applied New": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Not Removed": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Assessed": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Delayed Assessed": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Assessed in Other Location": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Not Assessed": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Pain score re-assessment": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Flushed": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Flushed in Other Location": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Delayed Flushed": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Not Flushed": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Delayed Not Flushed": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Started in Other Location": {
+        "action": "start",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Administered in Other Location": {
+        "action": "given",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Confirmed in Other Location": {
+        "action": "continue",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Stopped in Other Location": {
+        "action": "stop",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Stopped - Unscheduled in Other Location": {
+        "action": "stop",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Delayed Started": {
+        "action": "start",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Delayed Stopped": {
+        "action": "stop",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Delayed Administered": {
+        "action": "given",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Delayed Confirmed": {
+        "action": "continue",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Rate Change": {
+        "action": "continue",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Infusion Reconciliation": {
+        "action": "continue",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Administered Bolus from IV Drip": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Administered": {
+        "action": "given",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Confirmed": {
+        "action": "continue",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Started": {
+        "action": "start",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Restarted": {
+        "action": "restart",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Stopped": {
+        "action": "stop",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Stopped - Unscheduled": {
+        "action": "stop",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Stopped As Directed": {
+        "action": "stop",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Not Given": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Not Given per Sliding Scale": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Not Started": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Hold Dose": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "": {
+        "action": "review",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      " in Other Location": {
+        "action": "review",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Not Confirmed": {
+        "action": "review",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Delayed ": {
+        "action": "review",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Infusion Reconciliation Not Done": {
+        "action": "review",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Documented in O.R. Holding": {
+        "action": "review",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      }
+    },
+    "procedure_status_actions": {
+      "FinishedRunning": {
+        "action": "include",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Stopped": {
+        "action": "include",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "Paused": {
+        "action": "include",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      }
+    },
+    "iv_routes": {
+      "PO": {
+        "action": "non_iv",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "NG": {
+        "action": "non_iv",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "SC": {
+        "action": "non_iv",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "IM": {
+        "action": "non_iv",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "PR": {
+        "action": "non_iv",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "": {
+        "action": "missing",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      }
+    },
+    "spo2_units": {
+      "%": {
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      }
+    },
+    "spo2_threshold": 85,
+    "items": {
+      "220277": {
+        "label": "O2 saturation pulseoxymetry",
+        "linksto": "chartevents",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "225792": {
+        "label": "Invasive Ventilation",
+        "linksto": "procedureevents",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      },
+      "225794": {
+        "label": "Non-invasive Ventilation",
+        "linksto": "procedureevents",
+        "confirmed": false,
+        "reviewer": "",
+        "mapping_reason": ""
+      }
+    },
+    "overrides_path": null,
+    "candidate_medication_identity_policy": {
+      "action": "exclude",
+      "confirmed": false,
+      "reviewer": "",
+      "reason": "Medication identity cannot be uniquely confirmed",
+      "rationale": "",
+      "version": "medication_identity_exclusion_2026-10-04_v1"
+    },
+    "candidate_conflict_policies": {
+      "non_icu_transfer_with_active_icustay": {
+        "action": "exclude",
+        "confirmed": false,
+        "reviewer": "",
+        "reason": "Conflicting care-unit sources at t0",
+        "rationale": "",
+        "version": "candidate_conflict_policy_2026-10-04_v1"
+      }
+    },
+    "pharmacy_identity_lookup": {
+      "confirmed": false,
+      "reviewer": "",
+      "mapping_reason": "",
+      "version": "pharmacy_identity_lookup_2026-10-04_v1"
+    },
+    "prescriptions_identity_lookup": {
+      "confirmed": false,
+      "reviewer": "",
+      "mapping_reason": "",
+      "version": "prescriptions_identity_lookup_2026-10-04_v1"
+    },
+    "candidate_exclusions_path": null,
+    "cohort_decisions_path": null,
+    "event_decisions_path": null
+  }
+}
