@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 
-from src.cohort.create_patient_split import create_patient_split
+from src.cohort.create_patient_split import SPLIT_METHODS, create_patient_split
 from src.common.config import DataContext, add_data_arguments
 from src.common.manifest import ManifestStore
 from src.common.paths import Layout, PipelineError
@@ -17,6 +17,8 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     add_data_arguments(parser)
     parser.add_argument("--split-config",help="Project-relative split configuration within the selected data run")
+    parser.add_argument("--split-method", choices=SPLIT_METHODS, default="holdout",
+                        help="Patient allocation method (default: holdout); must match split config")
     args=parser.parse_args()
     try:
         context=DataContext.load(Layout(),args.version,args.run)
@@ -24,7 +26,7 @@ def main():
         if args.split_config is not None:
             target=context.check_config_ref(context.layout.ref("project",args.split_config))
             path=target.relative_to(context.layout.path("project",context.directory)).as_posix()
-        create_patient_split(context,path)
+        create_patient_split(context,path,split_method=args.split_method)
         store=ManifestStore(context.layout,data=context)
         ref=store.manifest_ref("step09","split")
         manifest=store.validate(ref)

@@ -1,0 +1,19 @@
+{
+  "algorithm_version": "patient_grouped_study_balanced_cv_v1",
+  "weights": [
+    68,
+    17,
+    15
+  ],
+  "seed": 42,
+  "primary_stratum": "phys_death_and_high_burden",
+  "require_high_burden_in_each_split": true,
+  "confirmed": false,
+  "reviewer": "",
+  "reviewed_on": "",
+  "rationale": "",
+  "test_fraction": 0.15,
+  "n_folds": 5,
+  "primary_fold": 1,
+  "index_base": 0
+}

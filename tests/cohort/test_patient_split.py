@@ -1,6 +1,7 @@
 """Split configuration boundaries and atomic publication over a generated frozen cohort."""
 
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import pyarrow as pa
@@ -73,6 +74,49 @@ class PatientSplitTests(unittest.TestCase):
         self.assertEqual(self.store.validate(self.ref)["generation"],2)
         self.assertEqual(self.output("patient_split.parquet").read_bytes(),before)
         self.assertEqual(read_json(self.output("run_metadata.json"))["csv_tail_checks"]["status"],"no_csv_inputs")
+
+    def test_five_fold_publication_and_fixed_test_membership(self):
+        with self.assertRaisesRegex(PipelineError, "SPLIT_METHOD_MISMATCH"):
+            create_patient_split(self.context, split_method="five-fold")
+        template = Path(__file__).resolve().parents[2] / "configs/data.template/v1_r2/cohort/patient_split.json"
+        config = read_json(template)
+        write_json(self.config, {
+            **config, "confirmed": True, "reviewer": "synthetic",
+            "reviewed_on": "2026-11-05", "rationale": "synthetic policy",
+        })
+        with self.assertRaisesRegex(PipelineError, "SPLIT_METHOD_MISMATCH"):
+            create_patient_split(self.context)
+
+        cohort = synthetic_cohort(n=40, high=12, phys=17)
+        repeat = {**cohort.to_pylist()[0], "hadm_id": 9999, "study_id": 9999,
+                  "sample_id": "p1000_h9999_s9999"}
+        self.cohort = pa.concat_tables([cohort, pa.Table.from_pylist([repeat], schema=cohort.schema)])
+        self.generated_context.update(cohort=self.cohort, cohort_audit=self.cohort)
+        self.publish_cohort()
+        create_patient_split(self.context, split_method="five-fold")
+
+        manifest = self.store.validate(self.ref)
+        self.assertEqual(manifest["details"]["split_method"], "five-fold")
+        indices = read_json(self.output("cross_validation_indices.json"))
+        validation_seen = set()
+        names = {"cross_validation_indices.json"}
+        for fold in indices["folds"]:
+            name = f"fold_{fold['fold']}/patient_split.parquet"
+            names.add(name)
+            membership = {r["subject_id"]: r["split"] for r in pq.read_table(self.output(name)).to_pylist()}
+            for part, ids in (
+                ("train", fold["train_indices"]),
+                ("validation", fold["validation_indices"]),
+                ("test", indices["test_indices"]),
+            ):
+                self.assertEqual(
+                    {i for i, row in enumerate(indices["master"]) if membership[row["subject_id"]] == part},
+                    set(ids),
+                )
+            self.assertFalse(validation_seen.intersection(fold["validation_indices"]))
+            validation_seen.update(fold["validation_indices"])
+        self.assertEqual(validation_seen, set(indices["development_indices"]))
+        self.assertEqual({r["name"] for r in manifest["outputs"] if r["root"] == "processed"}, names)
 
     def test_unconfirmed_unsupported_or_independent_versions_are_rejected(self):
         base=read_json(self.config)
