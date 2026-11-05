@@ -1,0 +1,15 @@
+{
+  "algorithm_version": "patient_stratified_pcg64_v1",
+  "weights": [
+    70,
+    15,
+    15
+  ],
+  "seed": 42,
+  "primary_stratum": "ever_phys_death",
+  "require_high_burden_in_each_split": true,
+  "confirmed": false,
+  "reviewer": "",
+  "reviewed_on": "",
+  "rationale": ""
+}
