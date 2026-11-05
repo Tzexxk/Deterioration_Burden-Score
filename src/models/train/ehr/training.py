@@ -1,9 +1,20 @@
 """Shared publication of EHR development-fold training artifacts."""
 
 from src.common.manifest import write_json
+from src.common.paths import require
 from src.models.ehr_data import checked_input_summary, load_package
 from src.models.experiments import completed_result, experiment_store, run_model_batch
 from src.models.released_data import ReleasedData
+
+
+def candidate_settings(experiment, family):
+    params = experiment["parameters"]
+    require(set(params) == {"candidate"} and isinstance(params["candidate"], dict),
+            "INVALID_MODEL_CONFIG", "A candidate object is required")
+    candidate = params["candidate"]
+    require(set(candidate) == {"name", "family", "params"} and candidate["family"] == family
+            and isinstance(candidate["params"], dict), "INVALID_MODEL_CONFIG", "Invalid model candidate")
+    return candidate["params"]
 
 
 def publish_training(layout, config_path, experiment, package, input_summary, model, fit_fold):

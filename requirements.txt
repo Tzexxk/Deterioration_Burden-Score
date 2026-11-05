@@ -26,5 +26,7 @@ pyjpegls==1.5.1
 
 # Model training
 catboost==1.2.10
+joblib==1.5.3
+xgboost==3.2.0
 torch==2.14.0+cu132
 torchvision==0.29.0+cu132

@@ -1,0 +1,38 @@
+{
+  "data_release": "v1_r3",
+  "defaults": {
+    "sensitivity_target": 0.8,
+    "specificity_target": 0.8,
+    "plot_training_history": false
+  },
+  "experiments": [
+    {
+      "id": "n01",
+      "description": "scikit-learn MLP development assessment for n01",
+      "parameters": {
+        "train_id": "n01"
+      }
+    },
+    {
+      "id": "n02",
+      "description": "scikit-learn MLP development assessment for n02",
+      "parameters": {
+        "train_id": "n02"
+      }
+    },
+    {
+      "id": "n03",
+      "description": "scikit-learn MLP development assessment for n03",
+      "parameters": {
+        "train_id": "n03"
+      }
+    },
+    {
+      "id": "n04",
+      "description": "scikit-learn MLP development assessment for n04",
+      "parameters": {
+        "train_id": "n04"
+      }
+    }
+  ]
+}

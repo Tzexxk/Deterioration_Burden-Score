@@ -1,0 +1,31 @@
+{
+  "data_release": "v1_r3",
+  "defaults": {
+    "sensitivity_target": 0.8,
+    "specificity_target": 0.8,
+    "plot_training_history": false
+  },
+  "experiments": [
+    {
+      "id": "h01",
+      "description": "HistGradientBoosting development assessment for h01",
+      "parameters": {
+        "train_id": "h01"
+      }
+    },
+    {
+      "id": "h02",
+      "description": "HistGradientBoosting development assessment for h02",
+      "parameters": {
+        "train_id": "h02"
+      }
+    },
+    {
+      "id": "h03",
+      "description": "HistGradientBoosting development assessment for h03",
+      "parameters": {
+        "train_id": "h03"
+      }
+    }
+  ]
+}

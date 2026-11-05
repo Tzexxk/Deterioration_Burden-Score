@@ -6,6 +6,7 @@ import numpy as np
 
 from src.common.paths import read_json, require
 from src.models.assessment.ehr.evaluation import assess_model
+from src.models.assessment.plots import plot_history
 
 
 def checkpoint_prediction(store, manifest, package, fold):
@@ -39,24 +40,6 @@ def checkpoint_prediction(store, manifest, package, fold):
             "INVALID_TRAINING_HISTORY", "RMSE history does not match the checkpoint's best round")
     raw = model.predict(package.features.iloc[fold["validation_indices"]])
     return raw, {"fold": fold["fold"], "best_round": best_round, "learn": learn, "validation": valid}
-
-
-def plot_history(histories, path):
-    from matplotlib.backends.backend_svg import FigureCanvasSVG
-    from matplotlib.figure import Figure
-
-    figure = Figure(figsize=(11, 8), layout="constrained")
-    axes = figure.subplots(3, 2).ravel()
-    for axis, history in zip(axes, histories):
-        rounds = np.arange(1, len(history["learn"]) + 1)
-        axis.plot(rounds, history["learn"], label="Train")
-        axis.plot(rounds, history["validation"], label="Validation")
-        axis.axvline(history["best_round"], color="gray", linestyle="--", label="Best round")
-        axis.set(title=f"Fold {history['fold']}", xlabel="Training round", ylabel="RMSE")
-        axis.legend()
-    for axis in axes[len(histories):]:
-        axis.set_visible(False)
-    FigureCanvasSVG(figure).print_svg(path)
 
 
 def run_assessment(layout, config_path, selected=None):

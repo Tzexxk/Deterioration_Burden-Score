@@ -1,0 +1,31 @@
+{
+  "data_release": "v1_r3",
+  "defaults": {
+    "sensitivity_target": 0.8,
+    "specificity_target": 0.8,
+    "plot_training_history": true
+  },
+  "experiments": [
+    {
+      "id": "x01",
+      "description": "XGBoost development assessment for x01",
+      "parameters": {
+        "train_id": "x01"
+      }
+    },
+    {
+      "id": "x02",
+      "description": "XGBoost development assessment for x02",
+      "parameters": {
+        "train_id": "x02"
+      }
+    },
+    {
+      "id": "x03",
+      "description": "XGBoost development assessment for x03",
+      "parameters": {
+        "train_id": "x03"
+      }
+    }
+  ]
+}

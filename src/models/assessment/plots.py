@@ -54,3 +54,18 @@ def confusion_plot(results, path, *, title):
             if column == 0:
                 axis.set_ylabel(f"{endpoint}\nActual")
     FigureCanvasSVG(figure).print_svg(path)
+
+
+def plot_history(histories, path, *, round_label="Training round"):
+    figure = Figure(figsize=(11, 8), layout="constrained")
+    axes = figure.subplots(3, 2).ravel()
+    for axis, history in zip(axes, histories):
+        rounds = np.arange(1, len(history["learn"]) + 1)
+        axis.plot(rounds, history["learn"], label="Train")
+        axis.plot(rounds, history["validation"], label="Validation")
+        axis.axvline(history["best_round"], color="gray", linestyle="--", label="Best round")
+        axis.set(title=f"Fold {history['fold']}", xlabel=round_label, ylabel="RMSE")
+        axis.legend()
+    for axis in axes[len(histories):]:
+        axis.set_visible(False)
+    FigureCanvasSVG(figure).print_svg(path)
