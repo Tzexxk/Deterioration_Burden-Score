@@ -2,6 +2,7 @@
 
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -15,7 +16,7 @@ from src.models.assessment.image.resnet18.assessment import run_assessment
 from src.models.experiments import experiment_store
 from src.models.image_data import load_image_package
 from src.models.released_data import ReleasedData
-from src.models.train.image.resnet18.training import run_training
+from src.models.train.image.resnet18.training import fit_fold, run_training
 from tests.models.train.ehr.catboost import test_training
 
 CONFIG = "configs/models/train/image/resnet18.json"
@@ -65,6 +66,31 @@ class ResNet18TrainingTests(unittest.TestCase):
         with self.assertRaisesRegex(PipelineError, "INVALID_IMAGE_PIXELS"):
             selected.read_image(0)
 
+    def test_frozen_baseline_keeps_backbone_state_and_skips_augmentation(self):
+        fixture = test_training.CatBoostTrainingTests()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        fixture.publish(image_shape=(40, 36))
+        fixture.store.freeze(fixture.store.manifest_ref("step13", "validate"))
+        release = ReleasedData.load(fixture.layout, "v1_r3")
+        package = load_image_package(release, {"kind": "package"})
+        template = Path(__file__).resolve().parents[5] / "configs/models.template/train/image/resnet18.json"
+        config = read_json(template)["defaults"]
+        self.assertEqual(config["head_only_epochs"], config["max_epochs"])
+        self.assertIs(config["augment"], False)
+        config.update(device="cpu", batch_size=4, head_only_epochs=2, max_epochs=2)
+        self.addCleanup(torch.set_num_threads, torch.get_num_threads())
+        torch.set_num_threads(1)
+        weights = resnet18(weights=None).state_dict()
+        folder = fixture.layout.path("project", "fold")
+        with patch("src.models.train.image.training.TF.affine", side_effect=AssertionError("Unexpected augmentation")):
+            fit_fold(package, package.cv["folds"][0], config, weights, folder, label="frozen")
+        checkpoint = torch.load(folder / "best.pt", map_location="cpu", weights_only=True)
+        for name, value in weights.items():
+            if not name.startswith("fc."):
+                self.assertTrue(torch.equal(checkpoint[name], value), name)
+        self.assertEqual([row["stage"] for row in read_json(folder / "history.json")["epochs"]], [1, 1])
+
     def test_cv_publishes_checkpoints_and_reads_development_pixels_only(self):
         fixture = test_training.CatBoostTrainingTests()
         fixture.setUp()
@@ -85,6 +111,7 @@ class ResNet18TrainingTests(unittest.TestCase):
         template = Path(__file__).resolve().parents[5] / "configs/models.template/train/image/resnet18.json"
         config = read_json(template)
         config["data_release"] = "v1_r3"
+        config["defaults"].pop("augment")
         config["defaults"].update(image_source={"kind": "package"}, device="cpu", batch_size=4,
                                   head_only_epochs=1, max_epochs=2,
                                   weights=layout.ref("project", "local_inputs/weights.pth"))

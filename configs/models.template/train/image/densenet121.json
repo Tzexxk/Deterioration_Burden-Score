@@ -1,0 +1,39 @@
+{
+  "data_release": "v1_r1",
+  "defaults": {
+    "image_source": {
+      "kind": "package"
+    },
+    "device": "auto",
+    "num_workers": 0,
+    "batch_size": 32,
+    "max_epochs": 15,
+    "head_lr": 0.001,
+    "weight_decay": 0.0001,
+    "seed": 42
+  },
+  "experiments": [
+    {
+      "id": "imagenet1k_frozen",
+      "description": "DenseNet-121 frozen ImageNet-1K backbone with a linear regression head",
+      "parameters": {
+        "pretraining": "IMAGENET1K_V1",
+        "weights": {
+          "root": "model_weights",
+          "path": "densenet121-a639ec97.pth"
+        }
+      }
+    },
+    {
+      "id": "chexpert_frozen",
+      "description": "DenseNet-121 frozen CheXpert backbone with a linear regression head",
+      "parameters": {
+        "pretraining": "densenet121-res224-chex",
+        "weights": {
+          "root": "model_weights",
+          "path": "chex-densenet121-d121-tw-lr001-rot45-tr15-sc15-seed0-best.pt"
+        }
+      }
+    }
+  ]
+}

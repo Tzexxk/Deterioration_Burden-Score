@@ -38,3 +38,6 @@ __pycache__/
 .venv/
 .pytest_cache/
 .ruff_cache/
+
+# Local image research plan.
+/IMAGE_RESEARCH_PLAN.local.md

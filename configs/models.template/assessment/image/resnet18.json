@@ -8,7 +8,7 @@
   "experiments": [
     {
       "id": "baseline",
-      "description": "ResNet18 development assessment",
+      "description": "ResNet18 frozen ImageNet-1K development assessment",
       "parameters": {
         "train_id": "baseline"
       }

@@ -1,0 +1,22 @@
+{
+  "data_release": "v1_r1",
+  "defaults": {
+    "sensitivity_target": 0.8,
+    "specificity_target": 0.8,
+    "plot_training_history": true
+  },
+  "experiments": [
+    {
+      "id": "imagenet1k_frozen",
+      "parameters": {
+        "train_id": "imagenet1k_frozen"
+      }
+    },
+    {
+      "id": "chexpert_frozen",
+      "parameters": {
+        "train_id": "chexpert_frozen"
+      }
+    }
+  ]
+}

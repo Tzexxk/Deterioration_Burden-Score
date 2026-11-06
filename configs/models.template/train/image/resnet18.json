@@ -9,8 +9,9 @@
     "device": "auto",
     "num_workers": 0,
     "batch_size": 32,
-    "head_only_epochs": 5,
-    "max_epochs": 50,
+    "head_only_epochs": 15,
+    "max_epochs": 15,
+    "augment": false,
     "patience": 10,
     "head_lr": 0.001,
     "layer4_lr": 0.0001,
@@ -20,7 +21,7 @@
   "experiments": [
     {
       "id": "baseline",
-      "description": "ResNet18 development CV baseline",
+      "description": "ResNet18 frozen ImageNet-1K development CV baseline",
       "parameters": {}
     }
   ]
