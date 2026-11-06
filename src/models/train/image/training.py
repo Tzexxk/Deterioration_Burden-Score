@@ -161,6 +161,36 @@ def fit_epochs(package, fold, config, model, optimizer, folder, *, label, device
     return {"fold": fold["fold"], "best_epoch": best_epoch, "best_rmse": best_rmse, "epochs": len(history)}
 
 
+def validate_frozen_settings(config):
+    integers = {"seed", "num_workers", "batch_size", "max_epochs"}
+    rates = {"head_lr", "weight_decay"}
+    require(set(config) == integers | rates | {"image_source", "weights", "device"}
+            and config["device"] in ("auto", "cpu", "cuda")
+            and all(type(config[key]) is int and config[key] >= 0 for key in integers)
+            and config["batch_size"] > 0 and config["max_epochs"] > 0 and config["seed"] < 2**32
+            and all(type(config[key]) in (int, float) and math.isfinite(config[key]) and config[key] >= 0
+                    for key in rates)
+            and config["head_lr"] > 0,
+            "INVALID_IMAGE_CONFIG", "Invalid frozen image training settings")
+
+
+def validate_pretrained_state(state):
+    require(isinstance(state, dict) and bool(state) and all(
+        isinstance(tensor, torch.Tensor) and bool(torch.isfinite(tensor).all())
+        for tensor in state.values()
+    ), "INVALID_PRETRAINED_WEIGHTS", "Expected finite pretrained model tensors")
+    return state
+
+
+def fit_frozen_head(package, fold, config, model, head, folder, *, label, device, transform=imagenet_input):
+    model.to(device).eval().requires_grad_(False)
+    head.requires_grad_(True)
+    optimizer = torch.optim.AdamW(head.parameters(), lr=config["head_lr"],
+                                  weight_decay=config["weight_decay"], foreach=False, fused=False)
+    return fit_epochs(package, fold, config, model, optimizer, folder, label=label, device=device,
+                      transform=transform)
+
+
 def image_runtime_versions(_config):
     return {name: version(name) for name in ("torch", "torchvision")}
 
