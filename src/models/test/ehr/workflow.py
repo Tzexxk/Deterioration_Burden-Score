@@ -1,5 +1,6 @@
 """Freeze full-development EHR fits and score the fixed test split."""
 
+import sys
 from statistics import median
 
 import numpy as np
@@ -78,6 +79,7 @@ def run_refit(layout, config_path, config, package, model, fit, predict):
 
     with store.publish("test", "refit", inputs=[assessment_ref], configs=[layout.ref("project", config_path)],
                        details={"data_release": config["data_release"], "assessment_id": assessment_id}) as work:
+        print(f"{model}/{key} refit: fitting {len(y)} development studies", file=sys.stderr, flush=True)
         with threadpool_limits(limits=1):
             expected = fit(features, y, package.schema, experiment["parameters"], rounds, work)
             restored = predict(features, package.schema, rounds, work)
@@ -119,6 +121,7 @@ def run_evaluate(layout, config_path, config, package, model, predict):
     with store.publish("test", "evaluate", inputs=[refit_ref], configs=[layout.ref("project", config_path)],
                        details={"data_release": config["data_release"], "assessment_id": config["assessment_id"]}) as work:
         folder = layout.resolve(refit_ref).parent
+        print(f"{model}/{key} evaluate: scoring {len(rows)} fixed-test studies", file=sys.stderr, flush=True)
         with threadpool_limits(limits=1):
             raw = predict(package.features.iloc[indices], package.schema, summary["refit_rounds"], folder)
             require(raw.shape == (len(rows),) and np.isfinite(raw).all(), "INVALID_CHECKPOINT", "Invalid fixed-test predictions")
@@ -153,6 +156,8 @@ def run_test(layout, config_path, model, mode, fit, predict):
     identifier(config["id"])
     identifier(config["assessment_id"])
     require(mode in ("refit", "evaluate"), "INVALID_TEST_MODE", "Select refit or evaluate")
+    print(f"{model}/{config['id']} {mode}: checking frozen release {config['data_release']}",
+          file=sys.stderr, flush=True)
     package = load_package(ReleasedData.load(layout, config["data_release"]))
     checked_input_summary(package)
     if mode == "refit":

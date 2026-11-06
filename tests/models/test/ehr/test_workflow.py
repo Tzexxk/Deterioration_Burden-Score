@@ -1,7 +1,9 @@
 """Verify refit and fixed-test publication for all selected EHR model families."""
 
 import unittest
+from contextlib import redirect_stderr
 from importlib import import_module
+from io import StringIO
 from statistics import median
 
 import numpy as np
@@ -63,7 +65,11 @@ class EHRFixedTestTests(unittest.TestCase):
                 assessed = assess_module.run_assessment(layout, assess_path, key)["experiments"][0]
                 self.assertEqual(assessed["status"], "complete", assessed)
 
-                refit = run_test(layout, config, model, "refit", adapter.fit, adapter.predict)
+                refit_log = StringIO()
+                with redirect_stderr(refit_log):
+                    refit = run_test(layout, config, model, "refit", adapter.fit, adapter.predict)
+                self.assertIn(f"{model}/{key} refit: checking frozen release v1_r3", refit_log.getvalue())
+                self.assertIn(f"{model}/{key} refit: fitting {len(development)} development studies", refit_log.getvalue())
                 refit_dir = layout.resolve(refit["manifest"]).parent
                 summary = read_json(refit_dir / "fit_summary.json")
                 self.assertEqual(summary["train_sample_ids"], development.sample_id.tolist())
@@ -72,7 +78,11 @@ class EHRFixedTestTests(unittest.TestCase):
                 folds = read_json(layout.resolve(trained["manifest"]).parent / "training_summary.json")["folds"]
                 self.assertEqual(summary["refit_rounds"], None if model == "extra_trees" else median(f["best_round"] for f in folds))
 
-                result = run_test(layout, config, model, "evaluate", adapter.fit, adapter.predict)
+                evaluate_log = StringIO()
+                with redirect_stderr(evaluate_log):
+                    result = run_test(layout, config, model, "evaluate", adapter.fit, adapter.predict)
+                self.assertIn(f"{model}/{key} evaluate: checking frozen release v1_r3", evaluate_log.getvalue())
+                self.assertIn(f"{model}/{key} evaluate: scoring {len(test)} fixed-test studies", evaluate_log.getvalue())
                 evaluated.append(result["manifest"])
                 store = experiment_store(layout, "test", "ehr", model, key)
                 self.assertEqual(store.validate(result["manifest"])["inputs"], [{"manifest": refit["manifest"], "generation": 1}])
@@ -107,7 +117,8 @@ class EHRFixedTestTests(unittest.TestCase):
         free = read_json(directory / "threshold_free/metrics.json")
         self.assertEqual(set(free), {"baseline_mean", "catboost/d2_l210", "extra_trees/t02", "xgboost/x03"})
         self.assertEqual(free["xgboost/x03"]["rmse"]["valid_draws"], 12)
-        self.assertTrue(any(line.startswith("Bootstrap (12 draws): 4/4") for line in progress))
+        self.assertIn("Validating test evaluations: 3/3 (xgboost/x03)", progress)
+        self.assertIn("Bootstrap (12 draws): 4/4 (xgboost/x03)", progress)
         self.assertTrue(any(line.startswith("Writing SVGs: 18/18") for line in progress))
         self.assertIn("Rechecking test evaluations: 3/3", progress)
         self.assertEqual(run_comparison(layout, "paired_test", draws=12)["status"], "unchanged")

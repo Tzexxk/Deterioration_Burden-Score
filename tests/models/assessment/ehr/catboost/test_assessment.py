@@ -2,6 +2,8 @@
 
 import shutil
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 
 import numpy as np
 import pandas as pd
@@ -34,8 +36,14 @@ class CatBoostAssessmentTests(unittest.TestCase):
                       {"id": "review", "parameters": {"train_id": "d2_l210"}},
                   ]}
         write_json(layout.path("project", CONFIG), config)
-        train = run_training(layout, test_training.CONFIG, "d2_l210")["experiments"][0]
-        result = run_assessment(layout, CONFIG)
+        training_log = StringIO()
+        with redirect_stdout(training_log):
+            train = run_training(layout, test_training.CONFIG, "d2_l210")["experiments"][0]
+        self.assertIn("catboost/d2_l210 fold=1: fitting development split", training_log.getvalue())
+        assessment_log = StringIO()
+        with redirect_stdout(assessment_log):
+            result = run_assessment(layout, CONFIG)
+        self.assertIn("catboost/review fold=1: scoring validation studies", assessment_log.getvalue())
         self.assertEqual(result["status"], "failed")
         self.assertEqual(result["experiments"][0]["error"], "TRAINING_NOT_COMPLETE")
         entry = result["experiments"][1]

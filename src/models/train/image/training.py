@@ -197,7 +197,8 @@ def image_runtime_versions(_config):
 
 def publish_training(layout, config_path, experiment, release, *, model, fit_fold, load_weights, runtime_versions):
     key, config = experiment["id"], experiment["parameters"]
-    print(f"{key}: checking released image source and patient folds", flush=True)
+    candidate = f"{model}/{key}"
+    print(f"{candidate}: checking released image source and patient folds", flush=True)
     package = load_image_package(release, config["image_source"])
     source = release.acceptance
     store = experiment_store(layout, "train", "image", model, key)
@@ -216,7 +217,7 @@ def publish_training(layout, config_path, experiment, release, *, model, fit_fol
                                 "image_shape": list(package.shape)}) as work:
         results = []
         for fold in package.cv["folds"]:
-            label = f"{key} fold={fold['fold']}"
+            label = f"{candidate} fold={fold['fold']}"
             print(f"{label}: fitting development split {package.shape}", flush=True)
             results.append(fit_fold(package, fold, config, weights, work / f"fold_{fold['fold']}", label=label))
         write_json(work / "effective_configuration.json", snapshot)

@@ -30,7 +30,7 @@ def output(store, manifest, name):
     return store.layout.resolve(store.output_ref(manifest, name))
 
 
-def checkpoint_prediction(store, manifest, package, fold, *, config, model_id, build_model, transform):
+def checkpoint_prediction(store, manifest, package, fold, *, config, candidate, build_model, transform):
     n = fold["fold"]
     train, valid = fold["train_indices"], fold["validation_indices"]
     prefix = f"fold_{n}"
@@ -48,7 +48,7 @@ def checkpoint_prediction(store, manifest, package, fold, *, config, model_id, b
             and best == int(np.argmin(validation)) + 1,
             "INVALID_TRAINING_HISTORY", "RMSE history differs from the image best checkpoint")
 
-    print(f"{model_id} fold={n}: reloading epoch {best} and scoring validation images", flush=True)
+    print(f"{candidate} fold={n}: reloading epoch {best} and scoring validation images", flush=True)
     device = configure_runtime(interface["device"].split(":")[0], config["seed"])
     checkpoint = torch.load(output(store, manifest, f"{prefix}/best.pt"), map_location="cpu", weights_only=True)
     model = build_model(config)
@@ -86,7 +86,8 @@ def assess_model(layout, config_path, selected, model, build_model, input_transf
         require(snapshot["resolved_image_source"] == package.source
                 and snapshot["image_shape"] == list(package.shape) == manifest["details"]["image_shape"],
                 "ASSESSMENT_DATA_MISMATCH", "Image source or dimensions differ from training")
-        predict = partial(checkpoint_prediction, config=config, model_id=model, build_model=build_model,
+        candidate = f"{model}/{experiment['id']}"
+        predict = partial(checkpoint_prediction, config=config, candidate=candidate, build_model=build_model,
                           transform=input_transform(config))
         plot = partial(plot_history, round_label="Epoch")
         return publish_assessment(layout, config_path, experiment, package, model, predict, plot,

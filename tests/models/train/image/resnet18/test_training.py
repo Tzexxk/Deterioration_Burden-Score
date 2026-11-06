@@ -1,6 +1,8 @@
 """Exercise package and variant image loading with arbitrary synthetic dimensions."""
 
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
@@ -120,7 +122,11 @@ class ResNet18TrainingTests(unittest.TestCase):
         threads = torch.get_num_threads()
         self.addCleanup(torch.set_num_threads, threads)
         torch.set_num_threads(1)
-        result = run_training(layout, CONFIG, CANDIDATE)["experiments"][0]
+        training_log = StringIO()
+        with redirect_stdout(training_log):
+            result = run_training(layout, CONFIG, CANDIDATE)["experiments"][0]
+        self.assertIn(f"resnet18/{CANDIDATE}: checking released image source", training_log.getvalue())
+        self.assertIn(f"resnet18/{CANDIDATE} fold=1 epoch=1/2", training_log.getvalue())
         self.assertEqual(result["status"], "complete", result)
         store = experiment_store(layout, "train", "image", "resnet18", CANDIDATE)
         manifest = store.validate(result["manifest"])
@@ -176,7 +182,10 @@ class ResNet18TrainingTests(unittest.TestCase):
         config = read_json(config_file)
         config["experiments"].append({"id": "second", "parameters": {"train_id": CANDIDATE}})
         write_json(config_file, config)
-        second = run_assessment(layout, config_path, "second")["experiments"][0]
+        assessment_log = StringIO()
+        with redirect_stdout(assessment_log):
+            second = run_assessment(layout, config_path, "second")["experiments"][0]
+        self.assertIn("resnet18/second fold=1: reloading epoch", assessment_log.getvalue())
         self.assertEqual(second["status"], "complete", second)
         write_json(layout.path("outputs", "models/assessment/image/other/incomplete/manifest.json"),
                    {"status": "running"})

@@ -28,7 +28,13 @@ def assess_model(layout, config_path, selected, model, predict, plot_history=Non
 
     def assess(experiment):
         source = training_source(layout, package, experiment["parameters"]["train_id"], model)
-        return publish_assessment(layout, config_path, experiment, package, model, predict, plot_history,
+        candidate = f"{model}/{experiment['id']}"
+
+        def predict_fold(store, manifest, package, fold):
+            print(f"{candidate} fold={fold['fold']}: scoring validation studies", flush=True)
+            return predict(store, manifest, package, fold)
+
+        return publish_assessment(layout, config_path, experiment, package, model, predict_fold, plot_history,
                                   modality="ehr", source=source)
 
     return run_model_batch(layout, "assessment", "ehr", model, experiments, assess)

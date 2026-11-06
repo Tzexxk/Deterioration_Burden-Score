@@ -29,7 +29,7 @@ def publish_training(layout, config_path, experiment, package, input_summary, mo
                        details={"data_release": experiment["data_release"], "folds": len(package.cv["folds"])}) as work:
         results = []
         for fold in package.cv["folds"]:
-            print(f"{key} fold={fold['fold']}: fitting development split", flush=True)
+            print(f"{model}/{key} fold={fold['fold']}: fitting development split", flush=True)
             results.append(fit_fold(package, experiment, fold, work / f"fold_{fold['fold']}"))
         write_json(work / "input_summary.json", input_summary)
         write_json(work / "effective_configuration.json", experiment)
