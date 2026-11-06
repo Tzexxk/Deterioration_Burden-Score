@@ -4,11 +4,13 @@ import unittest
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import torch
 from torchvision.models import resnet18
 
 from src.common.manifest import write_json
 from src.common.paths import PipelineError, read_json
+from src.models.assessment.image.resnet18.assessment import run_assessment
 from src.models.experiments import experiment_store
 from src.models.image_data import load_image_package
 from src.models.released_data import ReleasedData
@@ -103,3 +105,22 @@ class ResNet18TrainingTests(unittest.TestCase):
             interface = read_json(directory / "interface.json")
             self.assertNotIn("sample-00", interface["train_sample_ids"] + interface["validation_sample_ids"])
         self.assertEqual(run_training(layout, CONFIG, "baseline")["experiments"][0]["status"], "unchanged")
+
+        config_path = "configs/models/assessment/image/resnet18.json"
+        assessment_template = template.parent.parent.parent / "assessment/image/resnet18.json"
+        write_json(layout.path("project", config_path), read_json(assessment_template))
+        assessment = run_assessment(layout, config_path, "baseline")["experiments"][0]
+        self.assertEqual(assessment["status"], "complete", assessment)
+        assessment_store = experiment_store(layout, "assessment", "image", "resnet18", "baseline")
+        assessed = assessment_store.validate(assessment["manifest"])
+        self.assertEqual(assessed["inputs"], [{"manifest": result["manifest"], "generation": 1}])
+        directory = layout.resolve(assessment["manifest"]).parent
+        oof = pd.read_parquet(directory / "oof_predictions.parquet")
+        expected = pd.concat([pd.read_parquet(folder / f"fold_{i}/validation_predictions.parquet")
+                              for i in range(1, 6)]).sort_values("sample_id")
+        self.assertEqual(oof.sample_id.tolist(), expected.sample_id.tolist())
+        np.testing.assert_array_equal(oof.predicted_score, expected.predicted_score)
+        np.testing.assert_array_equal(oof.baseline_mean_score, np.full(10, 1.5))
+        self.assertTrue((directory / "training_history.svg").is_file())
+        for rule in ("sensitivity", "specificity"):
+            self.assertTrue((directory / "threshold_based" / f"{rule}_80" / "confusion_matrices.svg").is_file())
