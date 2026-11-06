@@ -1,4 +1,4 @@
-"""Compare all completed image assessments on paired development patients."""
+"""Compare completed image assessments on paired development patients."""
 
 import argparse
 import json
@@ -15,10 +15,12 @@ from src.models.assessment.image.comparison import run_comparison
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--id", required=True, help="ID for the published comparison")
+    parser.add_argument("--assessment", action="append", metavar="MODEL/ID",
+                        help="Select an assessment, repeat for multiple candidates (default: all completed)")
     args = parser.parse_args(argv)
     try:
         progress = partial(print, file=sys.stderr, flush=True)
-        print(json.dumps(run_comparison(Layout(), args.id, progress=progress)))
+        print(json.dumps(run_comparison(Layout(), args.id, assessment_ids=args.assessment, progress=progress)))
         return 0
     except PipelineError as error:
         print(str(error), file=sys.stderr)

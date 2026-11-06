@@ -170,3 +170,39 @@ class ResNet18TrainingTests(unittest.TestCase):
         self.assertTrue(any(message.startswith("Bootstrap (12 draws): 2/2") for message in progress))
         self.assertTrue(any(message.startswith("Writing SVGs: 18/18") for message in progress))
         self.assertEqual(run_comparison(layout, "paired_image", draws=12)["status"], "unchanged")
+
+        config_file = layout.path("project", config_path)
+        config = read_json(config_file)
+        config["experiments"].append({"id": "second", "parameters": {"train_id": "baseline"}})
+        write_json(config_file, config)
+        second = run_assessment(layout, config_path, "second")["experiments"][0]
+        self.assertEqual(second["status"], "complete", second)
+        write_json(layout.path("outputs", "models/assessment/image/other/incomplete/manifest.json"),
+                   {"status": "running"})
+
+        primary, extra = "resnet18/baseline", "resnet18/second"
+        selected = run_comparison(layout, "selected_image", assessment_ids=[extra, primary], draws=12)
+        self.assertEqual(selected["status"], "complete", selected)
+        store = experiment_store(layout, "assessment", "image", "comparison", "selected_image")
+        manifest = store.validate(selected["manifest"])
+        self.assertEqual(manifest["inputs"], [
+            {"manifest": entry["manifest"], "generation": 1} for entry in (assessment, second)
+        ])
+        root = layout.resolve(selected["manifest"]).parent
+        snapshot = read_json(root / "effective_configuration.json")
+        self.assertEqual(snapshot["parameters"]["assessment_ids"], [primary, extra])
+        metrics = read_json(root / "threshold_free/metrics.json")
+        self.assertEqual(set(metrics), {"baseline_mean", primary, extra})
+        self.assertEqual(run_comparison(layout, "selected_image", assessment_ids=[primary, extra],
+                                        draws=12)["status"], "unchanged")
+        with self.assertRaisesRegex(PipelineError, "EXPERIMENT_ID_CONFLICT"):
+            run_comparison(layout, "selected_image", assessment_ids=[primary], draws=12)
+        for requested, error in [
+            ([primary, primary], "DUPLICATE_ASSESSMENT"),
+            (["resnet18/missing"], "ASSESSMENT_NOT_FOUND"),
+            (["other/incomplete"], "UPSTREAM_INCOMPLETE"),
+            (["baseline"], "INVALID_ASSESSMENT_SELECTION"),
+        ]:
+            with self.subTest(requested=requested), self.assertRaisesRegex(PipelineError, error):
+                run_comparison(layout, "bad_selection", assessment_ids=requested, draws=12)
+        self.assertFalse(layout.path("outputs", "models/assessment/image/comparison/bad_selection").exists())

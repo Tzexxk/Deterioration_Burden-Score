@@ -22,12 +22,28 @@ BASELINE = "baseline_mean"
 RULES = ("sensitivity", "specificity")
 
 
-def discover(layout, modality, *, progress=None):
+def discover(layout, modality, *, assessment_ids=None, progress=None):
     root = layout.path("outputs", f"models/assessment/{modality}")
     sources = []
     paths = sorted(path for path in root.glob("*/*/manifest.json")
                    if not path.relative_to(root).parts[0].startswith(".")
                    and path.relative_to(root).parts[0] != "comparison")
+    if assessment_ids is not None:
+        selected = set()
+        for name in assessment_ids:
+            model, slash, key = name.partition("/")
+            require(slash and model and key and "/" not in key and model != "comparison",
+                    "INVALID_ASSESSMENT_SELECTION", "Use an assessment in MODEL/ID format")
+            identifier(model)
+            identifier(key)
+            require(name not in selected, "DUPLICATE_ASSESSMENT", f"Assessment selected twice: {name}")
+            selected.add(name)
+        require(selected, "INVALID_ASSESSMENT_SELECTION", "Select at least one assessment")
+        available = {path.parent.relative_to(root).as_posix(): path for path in paths}
+        missing = sorted(selected - available.keys())
+        require(not missing, "ASSESSMENT_NOT_FOUND",
+                f"No published assessment for: {', '.join(missing)}")
+        paths = [available[name] for name in sorted(selected)]
     if progress:
         progress(f"Validating assessments: 0/{len(paths)}")
     for index, path in enumerate(paths, 1):
@@ -176,9 +192,10 @@ def write_comparison(work, rows, free, based, targets, snapshot, *, progress=Non
                 progress(f"Writing SVGs: {index}/{total} ({metric})")
 
 
-def run_comparison(layout, key, *, modality, load_development, draws=5000, seed=42, progress=None):
+def run_comparison(layout, key, *, modality, load_development, assessment_ids=None,
+                   draws=5000, seed=42, progress=None):
     identifier(key)
-    sources = discover(layout, modality, progress=progress)
+    sources = discover(layout, modality, assessment_ids=assessment_ids, progress=progress)
     release = sources[0][3]["details"]["data_release"]
     mismatched = [f"{model}/{candidate}" for model, candidate, _, manifest in sources
                   if manifest["details"]["data_release"] != release]

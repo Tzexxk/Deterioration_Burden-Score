@@ -182,13 +182,12 @@ def validate_pretrained_state(state):
     return state
 
 
-def fit_frozen_head(package, fold, config, model, head, folder, *, label, device, transform=imagenet_input):
+def fit_frozen_head(package, fold, config, model, head, folder, *, label, device):
     model.to(device).eval().requires_grad_(False)
     head.requires_grad_(True)
     optimizer = torch.optim.AdamW(head.parameters(), lr=config["head_lr"],
                                   weight_decay=config["weight_decay"], foreach=False, fused=False)
-    return fit_epochs(package, fold, config, model, optimizer, folder, label=label, device=device,
-                      transform=transform)
+    return fit_epochs(package, fold, config, model, optimizer, folder, label=label, device=device)
 
 
 def image_runtime_versions(_config):
