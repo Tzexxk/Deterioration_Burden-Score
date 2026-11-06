@@ -44,6 +44,7 @@ class RidgeWorkflowTests(unittest.TestCase):
         train_config, assess_config = ("configs/models/train/ehr/ridge.json", "configs/models/assessment/ehr/ridge.json")
         for config in (train_config, assess_config):
             value = read_json(ROOT / config.replace("configs/models/", "configs/models.template/"))
+            value["data_release"] = "v1_r3"
             write_json(layout.path("project", config), value)
         trained = run_training(layout, train_config, "r01")["experiments"][0]
         self.assertEqual(trained["status"], "complete", trained)

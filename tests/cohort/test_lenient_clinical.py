@@ -76,13 +76,13 @@ class LenientClinicalTests(unittest.TestCase):
             outputs=str(self.outputs),
         )
         self.cohort = copy.deepcopy(
-            _json_file(PROJECT / "configs/data.template/v1_r1/cohort/burden_rules.json")
+            _json_file(PROJECT / "configs/data.template/lenient/cohort/burden_rules.json")
         )
         self.ehr = copy.deepcopy(
-            _json_file(PROJECT / "configs/data.template/v1_r1/ehr/burden_sources.json")
+            _json_file(PROJECT / "configs/data.template/lenient/ehr/burden_sources.json")
         )
         self.imaging = copy.deepcopy(
-            _json_file(PROJECT / "configs/data.template/v1_r1/imaging/raw_audit.json")
+            _json_file(PROJECT / "configs/data.template/lenient/imaging/raw_audit.json")
         )
         self.ehr["burden_v2"]["memory_limit"] = "128MB"
         rules = self.cohort["burden_v2"]

@@ -29,12 +29,13 @@ class ElasticNetWorkflowTests(unittest.TestCase):
         layout = fixture.layout
         for name in (TRAIN, ASSESS):
             value = read_json(ROOT / name.replace("configs/models/", "configs/models.template/"))
+            value["data_release"] = "v1_r3"
             write_json(layout.path("project", name), value)
         with patch("src.models.train.ehr.elastic_net.training.ElasticNet.fit",
                    side_effect=lambda *args: warnings.warn("fixture", ConvergenceWarning)):
             failed = run_training(layout, TRAIN, "e01")["experiments"][0]
         self.assertEqual(failed["error"], "OPTIMIZER_DID_NOT_CONVERGE")
-        self.assertFalse(layout.path("outputs", "models/train/ehr/elastic_net/e01/steps/train/run/manifest.json").exists())
+        self.assertFalse(layout.path("outputs", "models/train/ehr/elastic_net/e01/manifest.json").exists())
         trained = run_training(layout, TRAIN, "e01")["experiments"][0]
         self.assertEqual(trained["status"], "complete", trained)
         result = run_assessment(layout, ASSESS, "e01")["experiments"][0]

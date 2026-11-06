@@ -21,7 +21,7 @@ from src.models.test.ehr.workflow import SAMPLE_COLUMNS, output
 
 def discover(layout, progress):
     root = layout.path("outputs", "models/test/ehr")
-    paths = sorted(root.glob("*/*/steps/test/evaluate/manifest.json"))
+    paths = sorted(root.glob("*/*/evaluate/manifest.json"))
     require(paths, "NO_TEST_EVALUATIONS", "Run fixed-test evaluate for each selected candidate first")
     if progress:
         progress(f"Validating test evaluations: 0/{len(paths)}")

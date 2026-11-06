@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import stat
 from pathlib import Path
 from tempfile import mkdtemp
 
-from src.common.manifest import file_lock
-from src.common.paths import portable, require
+from src.common.manifest import file_lock, write_json
+from src.common.paths import Layout, portable, positive, read_json, require
+from src.models.released_data import ReleasedData
 
 
 def _linked(path):
@@ -81,15 +83,79 @@ def _remove_owned(path, configs):
         path.unlink()
 
 
-def initialize_configs(project=None):
+TEMPLATES = ("lenient", "strict", "multiple_size")
+
+
+def _run_target(configs, version, run):
+    data = configs / "data"
+    if data.exists() or data.is_symlink():
+        require(data.is_dir() and not _linked(data), "INVALID_CONFIG_ROOT", "Expected a real configs/data directory")
+    target = data / f"v{version}_r{run}"
+    require(not target.exists() and not target.is_symlink(), "CONFIG_ALREADY_EXISTS",
+            f"Configuration already exists for {target.name}")
+    versions = {}
+    if data.is_dir():
+        for folder in data.iterdir():
+            match = re.fullmatch(r"v([1-9][0-9]*)_r([1-9][0-9]*)", folder.name)
+            if match:
+                require(folder.is_dir() and not _linked(folder), "INVALID_CONFIG_ROOT",
+                        "Expected a real data run directory")
+                v, r = map(int, match.groups())
+                versions.setdefault(v, set()).add(r)
+    if version in versions:
+        valid = run == max(versions[version]) + 1 and len(versions[version]) == run - 1
+    else:
+        valid = version == len(versions) + 1 == max(versions, default=0) + 1 and run == 1
+    require(valid, "NONCONSECUTIVE_DATA_RUN", "Choose the next run in an existing version or run 1 in the next version")
+    return target
+
+
+def _master_settings(project, configs, version, run, source_run):
+    positive(source_run)
+    require(source_run < run, "INVALID_REUSE", "Select an older source run of the same data version")
+    release = ReleasedData.load(Layout(project), f"v{version}_r{source_run}")
+    metadata = read_json(release.package_file("dataset_metadata.json"))
+    require(metadata.get("image", {}).get("shape") == [224, 224]
+            and metadata.get("cross_validation", {}).get("n_folds") == 5,
+            "INVALID_MASTER_SOURCE", "The master source must be a frozen 224-pixel five-fold package")
+    parent = release.store.validate(release.store.manifest_ref("step07", "prepare"))
+    snapshot = read_json(release.store.layout.resolve(release.store.output_ref(parent, "effective_configuration.json")))
+    settings = dict(snapshot["processing"], size=1024, parent_run=source_run)
+    plan = read_json(configs / "utils.template/reuse_master_inputs.json")
+    plan["source_run"] = source_run
+    return settings, plan
+
+
+def initialize_configs(project=None, *, template="strict", version=1, run=1, source_run=None):
     project = Path(project or Path(__file__).resolve().parents[2]).resolve()
     require((project / "pyproject.toml").is_file(), "PROJECT_NOT_FOUND", "Project marker missing")
-    entries = _discover(project)
-    _preflight(project, entries)
-    configs = (project / "configs").resolve()
+    require(template in TEMPLATES, "INVALID_TEMPLATE", "Choose lenient, strict or multiple_size")
+    positive(version)
+    positive(run)
+    require((source_run is not None) == (template == "multiple_size"), "INVALID_REUSE",
+            "Specify --source-run only with multiple_size")
+    configs = project / "configs"
+    require(configs.is_dir() and not _linked(configs), "INVALID_TEMPLATE_ROOT", "Expected a real configs directory")
     with file_lock(configs / ".initialize.lock"):
-        entries = _discover(project)
-        _preflight(project, entries)
+        discovered = _discover(project)
+        target = _run_target(configs, version, run)
+        selection = configs / "version_run.json"
+        require(not selection.is_symlink() and (not selection.exists() or
+                (selection.is_file() and not _linked(selection))), "INVALID_VERSION_CONFIG",
+                "Expected a real version_run.json file")
+        previous_selection = selection.read_bytes() if selection.is_file() else None
+        source = configs / "data.template" / template
+        require(source.is_dir(), "INVALID_TEMPLATE", "Selected data template is missing")
+        common = []
+        for template_path, local in discovered:
+            if local.name in ("data", "version_run.json"):
+                continue
+            if local.exists() or local.is_symlink():
+                require(not _linked(local) and local.is_dir() == template_path.is_dir(),
+                        "INVALID_CONFIG_ROOT", "Existing shared configuration has the wrong type or is linked")
+            else:
+                common.append((template_path, local))
+        entries = [*common, (source, target)]
         needed = sum(path.stat().st_size for source, _ in entries
                      for path in ([source] if source.is_file() else source.rglob("*")) if path.is_file())
         require(shutil.disk_usage(configs).free >= needed * 2 + 65536,
@@ -97,20 +163,49 @@ def initialize_configs(project=None):
         parent = configs / "temp"
         require(not parent.is_symlink() and (not parent.exists() or not _linked(parent)),
                 "INVALID_TEMPLATE_ROOT", "Configuration temp directory must not be linked")
+        master = _master_settings(project, configs, version, run, source_run) if source_run is not None else None
         parent.mkdir(exist_ok=True)
         temporary = Path(mkdtemp(prefix="initialize_", dir=parent)).resolve()
         require(temporary.is_relative_to(configs), "PATH_ESCAPE", "Initialization temp escaped configs")
         owned = []
         try:
-            for source, target in entries:
-                staged = temporary / target.name
+            staged_entries = []
+            for index, (source, destination) in enumerate(entries):
+                staged = temporary / str(index)
                 if source.is_dir():
                     shutil.copytree(source, staged)
                 else:
                     shutil.copyfile(source, staged)
-            _preflight(project, entries)
-            for _, target in entries:
-                _publish(temporary / target.name, target, owned)
+                if destination == target:
+                    endpoint = staged / "cohort/reviews/endpoint_review.json"
+                    if endpoint.is_file():
+                        write_json(endpoint, dict(read_json(endpoint), version=version, run=run))
+                    if master:
+                        settings, plan = master
+                        template_settings = read_json(staged / "imaging/processing.json")
+                        settings.update(processing_version=template_settings["processing_version"],
+                                        reviews_path=template_settings["reviews_path"])
+                        write_json(staged / "imaging/processing.json", settings)
+                staged_entries.append((staged, destination))
+            if master:
+                plan_file = temporary / "reuse_master_inputs.json"
+                write_json(plan_file, plan)
+                staged_entries.append((plan_file, configs / "utils" / target.name / plan_file.name))
+            selector = temporary / selection.name
+            write_json(selector, {"version": version, "run": run})
+            _preflight(project, staged_entries)
+            for staged, destination in staged_entries:
+                if not destination.parent.exists():
+                    destination.parent.mkdir()
+                    owned.append(destination.parent)
+                require(not _linked(destination.parent), "INVALID_CONFIG_ROOT", "Local configuration parent is linked")
+                _publish(staged, destination, owned)
+            if previous_selection is not None:
+                require(selection.is_file() and not _linked(selection) and selection.read_bytes() == previous_selection,
+                        "VERSION_CONFIG_CHANGED", "version_run.json changed during initialization")
+                selector.replace(selection)
+            else:
+                _publish(selector, selection, owned)
         except BaseException:
             for path in reversed(owned):
                 _remove_owned(path, configs)
@@ -119,4 +214,4 @@ def initialize_configs(project=None):
             _remove_owned(temporary, configs)
             if parent.exists() and not any(parent.iterdir()):
                 parent.rmdir()
-    return [target.relative_to(project).as_posix() for _, target in entries]
+    return [destination.relative_to(project).as_posix() for _, destination in staged_entries] + ["configs/version_run.json"]

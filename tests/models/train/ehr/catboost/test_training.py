@@ -31,7 +31,7 @@ class CatBoostTrainingTests(unittest.TestCase):
         (root / "pyproject.toml").touch()
         write_json(root / "configs/environment/paths.local.json", {"roots": {}})
         write_json(root / "configs/version_run.json", {"version": 99, "run": 1})
-        write_json(root / CONFIG, read_json(TEMPLATE))
+        write_json(root / CONFIG, dict(read_json(TEMPLATE), data_release="v1_r3"))
         self.layout = Layout(root)
         self.store = ManifestStore(self.layout, data=DataContext(self.layout, 1, 3))
 

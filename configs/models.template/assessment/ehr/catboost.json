@@ -1,5 +1,5 @@
 {
-  "data_release": "v1_r3",
+  "data_release": "v1_r1",
   "defaults": {
     "sensitivity_target": 0.8,
     "plot_training_history": true,

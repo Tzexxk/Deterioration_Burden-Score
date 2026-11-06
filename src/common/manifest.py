@@ -94,12 +94,21 @@ class ManifestStore:
             if model_stage is not None:
                 self.scope.update(model_stage=model_stage, model=model)
             self.prefix = self._model_prefix(self.scope)
-        self.flat = self._flat_comparison(self.scope)
+        self.flat = self._flat_model(self.scope)
         self.control = layout.path("outputs", self._control_directory(self.prefix, self.flat))
 
     @staticmethod
-    def _flat_comparison(scope):
-        return scope.get("model_stage") in ("assessment", "test") and scope.get("model") == "comparison"
+    def _flat_model(scope):
+        return scope.get("model_stage") in ("train", "assessment") or scope.get("model") == "comparison"
+
+    @classmethod
+    def _model_directory(cls, scope, prefix, stage, phase):
+        if "model_stage" not in scope:
+            return f"{prefix}/steps/{stage}/{phase}"
+        expected = "comparison" if scope["model"] == "comparison" else scope["model_stage"]
+        phases = ("refit", "evaluate") if expected == "test" else ("run",)
+        require(stage == expected and phase in phases, "INVALID_STAGE", "Unexpected stage or phase for this model")
+        return prefix if cls._flat_model(scope) else f"{prefix}/{phase}"
 
     @staticmethod
     def _control_directory(prefix, flat):
@@ -178,11 +187,12 @@ class ManifestStore:
             require(stage in {f"step{i:02d}" for i in range(1, 14)}, "INVALID_STAGE", "Data stages are step01 through step13")
         area = area or "outputs"
         require(area == "outputs", "INVALID_DESTINATION", "Manifests belong to outputs")
-        base = self.data.key if area == "processed" and self.data else self.prefix
-        if self.flat:
-            require((stage, phase) == ("comparison", "run") and destination in (None, base),
-                    "INVALID_DESTINATION", "Comparison publishes directly at its experiment root")
-        directory = destination or (base if self.flat else f"{base}/steps/{stage}/{phase}")
+        directory = (f"{self.prefix}/steps/{stage}/{phase}" if self.data else
+                     self._model_directory(self.scope, self.prefix, stage, phase))
+        if destination is not None:
+            require("model_stage" not in self.scope or destination == directory,
+                    "INVALID_DESTINATION", "Model publication must use its declared result directory")
+            directory = destination
         ref = self.layout.ref(area, f"{relative(directory)}/manifest.json")
         self._owned(ref)
         return ref
@@ -216,11 +226,10 @@ class ManifestStore:
             require(scope.get("kind") == "model", "INVALID_SCOPE", "Unknown upstream scope")
             prefix = self._model_prefix(scope)
             if "model_stage" in scope:
-                require(ref["path"].startswith(prefix + "/"), "INVALID_MANIFEST", "Model manifest is outside its experiment")
-        flat = self._flat_comparison(scope) and ref["path"] == f"{prefix}/manifest.json"
-        if flat:
-            require((manifest["stage"], manifest["phase"]) == ("comparison", "run"),
-                    "INVALID_MANIFEST", "Only comparison results may be published at their experiment root")
+                directory = self._model_directory(scope, prefix, manifest["stage"], manifest["phase"])
+                require(ref["path"] == f"{directory}/manifest.json",
+                        "INVALID_MANIFEST", "Model manifest is outside its publication directory")
+        flat = self._flat_model(scope)
         expected_control = self.layout.path("outputs", self._control_directory(prefix, flat))
         expected_state = expected_control / f"{manifest['stage']}.{manifest['phase']}.state.json"
         require(state_path == expected_state, "INVALID_MANIFEST", "Stage state location mismatch")

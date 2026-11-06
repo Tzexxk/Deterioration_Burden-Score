@@ -24,9 +24,9 @@ class InitializeConfigTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         (self.root / "pyproject.toml").write_text('[project]\nname="fixture"\n', encoding="utf-8")
         self.configs = self.root / "configs"
-        for name in ("data.template/v1_r1/ehr", "environment.template"):
+        for name in ("data.template/strict/ehr", "environment.template"):
             (self.configs / name).mkdir(parents=True)
-        self.data = self.configs / "data.template/v1_r1/ehr/raw_audit.json"
+        self.data = self.configs / "data.template/strict/ehr/raw_audit.json"
         self.data.write_text('{"raw_audit": {}}\n', encoding="utf-8")
         (self.configs / "environment.template/paths.local.json").write_text('{"roots": {}}\n', encoding="utf-8")
         (self.configs / "version_run.template.json").write_text('{"version": 1, "run": 1}\n', encoding="utf-8")
@@ -39,30 +39,50 @@ class InitializeConfigTests(unittest.TestCase):
 
     def test_discovers_directory_and_root_file_templates_and_preserves_them(self):
         created = initialize_configs(self.root)
-        self.assertEqual(set(created), {"configs/data", "configs/environment", "configs/version_run.json"})
+        self.assertEqual(set(created), {"configs/data/v1_r1", "configs/environment", "configs/version_run.json"})
         self.assertEqual((self.configs / "data/v1_r1/ehr/raw_audit.json").read_bytes(), self.data.read_bytes())
         self.assertEqual(json.loads((self.configs / "version_run.json").read_text()), {"version": 1, "run": 1})
         self.assertTrue(self.data.exists())
         self.assertTrue((self.configs / "version_run.template.json").exists())
         self.assertFalse((self.configs / "temp").exists())
 
-    def test_existing_directory_blocks_entire_batch(self):
+    def test_preserves_shared_configuration_and_updates_selection(self):
         actual = self.configs / "environment"
         actual.mkdir()
         (actual / "keep.txt").write_text("keep", encoding="utf-8")
-        self.error("CONFIG_ALREADY_EXISTS", lambda: initialize_configs(self.root))
-        self.assertFalse((self.configs / "data").exists())
-        self.assertFalse((self.configs / "version_run.json").exists())
+        initialize_configs(self.root)
+        initialize_configs(self.root, version=2, run=1)
+        initialize_configs(self.root, version=1, run=2)
         self.assertEqual((actual / "keep.txt").read_text(), "keep")
+        self.assertEqual(json.loads((self.configs / "version_run.json").read_text()), {"version": 1, "run": 2})
+        self.error("CONFIG_ALREADY_EXISTS", lambda: initialize_configs(self.root))
         self.assertFalse((self.configs / "temp").exists())
 
-    def test_existing_version_file_blocks_entire_batch(self):
-        actual = self.configs / "version_run.json"
-        actual.write_text('{"version": 9, "run": 9}', encoding="utf-8")
-        self.error("CONFIG_ALREADY_EXISTS", lambda: initialize_configs(self.root))
-        self.assertFalse((self.configs / "data").exists())
-        self.assertFalse((self.configs / "environment").exists())
-        self.assertEqual(json.loads(actual.read_text())["version"], 9)
+    def test_rejects_skipped_version_or_run(self):
+        self.error("NONCONSECUTIVE_DATA_RUN", lambda: initialize_configs(self.root, run=2))
+        initialize_configs(self.root)
+        for version, run in ((1, 3), (2, 2), (3, 1)):
+            self.error("NONCONSECUTIVE_DATA_RUN", lambda: initialize_configs(self.root, version=version, run=run))
+        self.assertEqual(json.loads((self.configs / "version_run.json").read_text()), {"version": 1, "run": 1})
+
+    def test_master_initialization_records_source_and_keeps_shared_plan(self):
+        template = self.configs / "data.template/multiple_size/imaging"
+        template.mkdir(parents=True)
+        (template / "processing.json").write_text(
+            '{"processing_version":"master","reviews_path":"imaging/reviews/image_qc.csv"}', encoding="utf-8")
+        shared = self.configs / "utils.template"
+        shared.mkdir()
+        (shared / "reuse_master_inputs.json").write_text('{"source_run":2}', encoding="utf-8")
+        initialize_configs(self.root)
+        self.error("INVALID_REUSE", lambda: initialize_configs(self.root, template="multiple_size", run=2))
+        with patch("src.utils.initialize_configs._master_settings",
+                   return_value=({"size": 1024, "parent_run": 1}, {"source_run": 1})):
+            initialize_configs(self.root, template="multiple_size", run=2, source_run=1)
+        self.assertEqual(json.loads((self.configs / "utils/v1_r2/reuse_master_inputs.json").read_text()),
+                         {"source_run": 1})
+        self.assertEqual(json.loads((self.configs / "utils/reuse_master_inputs.json").read_text()),
+                         {"source_run": 2})
+        self.assertEqual(json.loads((self.configs / "data/v1_r2/imaging/processing.json").read_text())["parent_run"], 1)
 
     def test_discovers_future_templates_without_a_hardcoded_list(self):
         extra = self.configs / "extra.template"

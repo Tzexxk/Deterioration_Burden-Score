@@ -23,7 +23,7 @@ VERSION="v1_r1"
 
 
 def approved_settings():
-    settings=read_json(PROJECT/"configs/data.template/v1_r1/cohort/patient_split.json")
+    settings=read_json(PROJECT/"configs/data.template/lenient/cohort/patient_split.json")
     return {**settings,"confirmed":True,"reviewer":"synthetic","reviewed_on":"2026-11-05","rationale":"synthetic approval", "cohort_version":VERSION,"split_version":VERSION}
 
 

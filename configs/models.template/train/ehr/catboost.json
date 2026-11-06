@@ -1,5 +1,5 @@
 {
-  "data_release": "v1_r3",
+  "data_release": "v1_r1",
   "defaults": {
     "config_version": "ehr_modeling_v1",
     "protocol_id": "ehr_r02_catboost_four_candidates_raw_rmse_v1",

@@ -145,7 +145,7 @@ class FeatureTests(unittest.TestCase):
         self.cache = self.root / "cache"
         self.cache.mkdir()
         self.write_sources()
-        self.settings = read_json(PROJECT / "configs/data.template/v1_r1/ehr/features.json")
+        self.settings = read_json(PROJECT / "configs/data.template/lenient/ehr/features.json")
         self.settings.update(memory_limit="128MB", max_temp_directory_size="64MB", workspace_estimate_bytes=1024*1024)
         self.config = self.root / self.context.directory / "ehr/features.json"
         write_json(self.config, self.settings)

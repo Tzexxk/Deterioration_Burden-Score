@@ -27,7 +27,7 @@ class EHRModelWorkflowTests(unittest.TestCase):
                 train = f"configs/models/train/ehr/{model}.json"
                 assessment = f"configs/models/assessment/ehr/{model}.json"
                 train_cfg, assess_cfg = (
-                    read_json(ROOT / name.replace("configs/models/", "configs/models.template/"))
+                    dict(read_json(ROOT / name.replace("configs/models/", "configs/models.template/")), data_release="v1_r3")
                     for name in (train, assessment)
                 )
                 candidate = train_cfg["experiments"][0]

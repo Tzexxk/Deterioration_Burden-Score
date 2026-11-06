@@ -26,6 +26,7 @@ class TweedieWorkflowTests(unittest.TestCase):
         layout = fixture.layout
         for name in (TRAIN, ASSESS):
             value = read_json(ROOT / name.replace("configs/models/", "configs/models.template/"))
+            value["data_release"] = "v1_r3"
             write_json(layout.path("project", name), value)
         trained = run_training(layout, TRAIN, "w01")["experiments"][0]
         self.assertEqual(trained["status"], "complete", trained)

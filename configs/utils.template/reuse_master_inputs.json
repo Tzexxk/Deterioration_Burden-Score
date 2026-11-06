@@ -1,5 +1,5 @@
 {
-  "source_run": 2,
+  "source_run": 1,
   "target": {
     "stage": "step06",
     "phase": "reuse"

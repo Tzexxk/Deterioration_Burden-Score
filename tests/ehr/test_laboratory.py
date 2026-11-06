@@ -44,7 +44,7 @@ class LaboratoryTests(unittest.TestCase):
         self.store = ManifestStore(self.context.layout, data=self.context)
         self.raw = self.context.layout.roots["mimic_iv"]
         self.raw.mkdir(exist_ok=True)
-        self.settings = read_json(PROJECT / "configs/data.template/v1_r1/ehr/lab_processing.json")
+        self.settings = read_json(PROJECT / "configs/data.template/lenient/ehr/lab_processing.json")
         self.settings.update(reviewer="synthetic", memory_limit="128MB", max_temp_directory_size="64MB", workspace_estimate_bytes=1024*1024, comment_max_chars=32)
         self.config = self.root / self.context.directory / "ehr/lab_processing.json"
         write_json(self.config, self.settings)

@@ -14,5 +14,5 @@
   "review_seed": 42,
   "review_per_group": 5,
   "reviews_path": "imaging/reviews/image_qc.csv",
-  "parent_run": 2
+  "parent_run": 1
 }

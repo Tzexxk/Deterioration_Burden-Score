@@ -1,7 +1,7 @@
 {
   "confirmed": false,
   "version": 1,
-  "run": 2,
+  "run": 1,
   "audit_generation": null,
   "review_policy": "strict",
   "horizon_hours": 72,

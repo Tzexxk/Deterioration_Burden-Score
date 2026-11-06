@@ -84,6 +84,7 @@ class ResNet18TrainingTests(unittest.TestCase):
         torch.save(resnet18(weights=None).state_dict(), weights)
         template = Path(__file__).resolve().parents[5] / "configs/models.template/train/image/resnet18.json"
         config = read_json(template)
+        config["data_release"] = "v1_r3"
         config["defaults"].update(image_source={"kind": "package"}, device="cpu", batch_size=4,
                                   head_only_epochs=1, max_epochs=2,
                                   weights=layout.ref("project", "local_inputs/weights.pth"))
@@ -109,7 +110,7 @@ class ResNet18TrainingTests(unittest.TestCase):
 
         config_path = "configs/models/assessment/image/resnet18.json"
         assessment_template = template.parent.parent.parent / "assessment/image/resnet18.json"
-        write_json(layout.path("project", config_path), read_json(assessment_template))
+        write_json(layout.path("project", config_path), dict(read_json(assessment_template), data_release="v1_r3"))
         assessment = run_assessment(layout, config_path, "baseline")["experiments"][0]
         self.assertEqual(assessment["status"], "complete", assessment)
         assessment_store = experiment_store(layout, "assessment", "image", "resnet18", "baseline")

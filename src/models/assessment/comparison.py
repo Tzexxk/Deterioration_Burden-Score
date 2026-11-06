@@ -25,8 +25,9 @@ RULES = ("sensitivity", "specificity")
 def discover(layout, modality, *, progress=None):
     root = layout.path("outputs", f"models/assessment/{modality}")
     sources = []
-    paths = sorted(path for path in root.glob("*/*/steps/assessment/run/manifest.json")
-                   if path.relative_to(root).parts[0] != "comparison")
+    paths = sorted(path for path in root.glob("*/*/manifest.json")
+                   if not path.relative_to(root).parts[0].startswith(".")
+                   and path.relative_to(root).parts[0] != "comparison")
     if progress:
         progress(f"Validating assessments: 0/{len(paths)}")
     for index, path in enumerate(paths, 1):

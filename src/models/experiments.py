@@ -51,15 +51,18 @@ def changed_parameters(previous, current, prefix=""):
 
 def update_index(root, stage):
     completed, pending = [], []
-    for folder in sorted(path for path in root.iterdir() if path.is_dir()):
-        stage_dir = folder / "steps" / stage / "run"
-        state = folder / ".control" / f"{stage}.run.state.json"
+    control = root / ".control"
+    folders = {path.name for path in root.iterdir() if path.is_dir() and not path.name.startswith(".")}
+    folders.update(path.parent.name for path in control.glob(f"*/{stage}.run.state.json"))
+    for key in sorted(folders):
+        stage_dir = root / key
+        state = control / key / f"{stage}.run.state.json"
         if (stage_dir / "manifest.json").is_file():
             manifest = read_json(stage_dir / "manifest.json")
             snapshot = read_json(stage_dir / "effective_configuration.json")
             completed.append((manifest, snapshot, stage_dir.relative_to(root).as_posix()))
         elif state.is_file():
-            pending.append((folder.name, read_json(state)["status"]))
+            pending.append((key, read_json(state)["status"]))
     completed.sort(key=lambda item: (item[0]["created_utc"], item[1]["id"]))
     lines = [f"# {stage.title()} experiment IDs", ""]
     if completed:

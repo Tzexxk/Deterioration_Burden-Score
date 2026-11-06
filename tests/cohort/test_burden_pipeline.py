@@ -217,7 +217,7 @@ class BurdenPipelineTests(unittest.TestCase):
         name = "configs/data/v1_r1/cohort/reviews/event_evidence.csv"
         path = self.fixture.root / name
         path.parent.mkdir(parents=True, exist_ok=True)
-        headers = (PROJECT / "configs/data.template/v1_r1/cohort/reviews/event_evidence.csv").read_text(encoding="utf-8").strip().split(",")
+        headers = (PROJECT / "configs/data.template/lenient/cohort/reviews/event_evidence.csv").read_text(encoding="utf-8").strip().split(",")
         with path.open("w", encoding="utf-8", newline="") as stream:
             writer = csv.DictWriter(stream, fieldnames=headers, lineterminator="\n")
             writer.writeheader()

@@ -61,7 +61,7 @@ class ImagePreparationTests(unittest.TestCase):
         self.pipeline.review()
         freeze_endpoint(self.context)
         build_burden_labels(self.context)
-        settings = read_json(PROJECT / "configs/data.template/v1_r1/imaging/processing.json")
+        settings = read_json(PROJECT / "configs/data.template/lenient/imaging/processing.json")
         self.settings_path = self.context.layout.path("project", self.context.directory + "/imaging/processing.json")
         write_json(self.settings_path, settings)
         self.reviews_path = self.settings_path.parent / "reviews/image_qc.csv"

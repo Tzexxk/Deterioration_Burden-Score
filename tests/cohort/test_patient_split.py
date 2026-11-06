@@ -80,7 +80,7 @@ class PatientSplitTests(unittest.TestCase):
     def test_five_fold_publication_and_fixed_test_membership(self):
         with self.assertRaisesRegex(PipelineError, "SPLIT_METHOD_MISMATCH"):
             create_patient_split(self.context, split_method="five-fold")
-        template = Path(__file__).resolve().parents[2] / "configs/data.template/v1_r2/cohort/patient_split.json"
+        template = Path(__file__).resolve().parents[2] / "configs/data.template/strict/cohort/patient_split.json"
         config = read_json(template)
         write_json(self.config, {
             **config, "confirmed": True, "reviewer": "synthetic",

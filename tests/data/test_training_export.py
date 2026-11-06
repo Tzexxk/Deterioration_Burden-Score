@@ -79,7 +79,7 @@ class TrainingExportTests(unittest.TestCase):
                        "ehr_path":self.context.layout.resolve(self.store.output_ref(source,"ehr_features_raw.parquet")),
                        "schema_path":self.context.layout.resolve(self.store.output_ref(source,"feature_schema.json")),
                        "qc_records":cohort, "image_manifest":self.store.validate(self.store.manifest_ref("step07","prepare")),
-                       "image_settings":read_json(PROJECT/"configs/data.template/v1_r1/imaging/processing.json"),
+                       "image_settings":read_json(PROJECT/"configs/data.template/lenient/imaging/processing.json"),
                        "decision":{"outcome_version":"synthetic", "target_formula":"max(icu,stepdown)+2*max(imv,hypoxemia)+2*vaso_inotrope+3*death"},
                        "split_settings":{"algorithm_version":"synthetic", "seed":42, "weights":[70,15,15],
                                          "primary_stratum":"ever_phys_death", "require_high_burden_in_each_split":True}}

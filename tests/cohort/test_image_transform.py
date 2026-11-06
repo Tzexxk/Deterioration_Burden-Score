@@ -56,7 +56,7 @@ def lut(values, first=0, bits=16):
 class ImageTransformTests(unittest.TestCase):
 
     def setUp(self):
-        self.settings = _json_file(PROJECT / 'configs/data.template/v1_r1/imaging/processing.json')
+        self.settings = _json_file(PROJECT / 'configs/data.template/lenient/imaging/processing.json')
 
     def test_direction_presentation_and_odd_padding(self):
         a = process_dataset(dicom(), self.settings)

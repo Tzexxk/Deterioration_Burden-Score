@@ -269,6 +269,7 @@ class CopyArtifactTests(unittest.TestCase):
         template = project / "configs/utils.template/copy_data_artifacts.json"
         write_json(template, default_plan())
         (project / "pyproject.toml").write_text("# synthetic project", encoding="utf-8")
+        write_json(project / "configs/data.template/strict/sample.json", {})
         initialize_configs(project)
         actual = project / "configs/utils/copy_data_artifacts.json"
         self.assertEqual(actual.read_bytes(), template.read_bytes())

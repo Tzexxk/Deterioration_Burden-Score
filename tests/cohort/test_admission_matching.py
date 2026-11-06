@@ -88,7 +88,7 @@ class AdmissionPipelineTests(unittest.TestCase):
         self.fixture.setUp()
         self.addCleanup(self.fixture.doCleanups)
         self.context, self.root, self.store = self.fixture.context, self.fixture.root, self.fixture.store
-        config = json.loads((PROJECT / "configs/data.template/v1_r1/cohort/admission_matching.json").read_text(encoding="utf-8"))
+        config = json.loads((PROJECT / "configs/data.template/lenient/cohort/admission_matching.json").read_text(encoding="utf-8"))
         self.config = self.root / "configs/data/v1_r1/cohort/admission_matching.json"
         write_json(self.config, config)
         self.ref = self.store.manifest_ref("step04", "match")

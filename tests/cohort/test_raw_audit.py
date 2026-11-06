@@ -50,7 +50,7 @@ class RawAuditTests(unittest.TestCase):
             "mimic_cxr": "local_inputs/cxr", "mimic_iv": "local_inputs/iv"}})
         write_json(self.root / "configs/version_run.json", {"version": 1, "run": 1})
         for group in ("imaging", "ehr"):
-            value = json.loads((PROJECT / f"configs/data.template/v1_r1/{group}/raw_audit.json").read_text(encoding="utf-8"))
+            value = json.loads((PROJECT / f"configs/data.template/lenient/{group}/raw_audit.json").read_text(encoding="utf-8"))
             if group == "imaging":
                 value["raw_audit"].update(dicom_workers=1, dicom_batch_size=2)
             else:
@@ -145,7 +145,7 @@ class RawAuditTests(unittest.TestCase):
         run_audit(self.context)
         before = {path:path.read_bytes() for path in self.output.iterdir() if path.is_file()}
         for group in ("imaging", "ehr"):
-            value = json.loads((PROJECT / f"configs/data.template/v1_r2/{group}/raw_audit.json").read_text(encoding="utf-8"))
+            value = json.loads((PROJECT / f"configs/data.template/strict/{group}/raw_audit.json").read_text(encoding="utf-8"))
             if group == "imaging":
                 value["raw_audit"].update(dicom_workers=1, dicom_batch_size=2)
             else:
