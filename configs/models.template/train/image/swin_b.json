@@ -6,7 +6,7 @@
     },
     "weights": {
       "root": "model_weights",
-      "path": "swin_b-68c6b09e.pth"
+      "path": "Swin-B/swin_b-68c6b09e.pth"
     },
     "device": "auto",
     "num_workers": 0,

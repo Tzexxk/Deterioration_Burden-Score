@@ -1,0 +1,26 @@
+{
+  "data_release": "v1_r1",
+  "defaults": {
+    "image_source": {
+      "kind": "package"
+    },
+    "weights": {
+      "root": "model_weights",
+      "path": "CAFormer-S18/model.safetensors"
+    },
+    "device": "auto",
+    "num_workers": 0,
+    "batch_size": 32,
+    "max_epochs": 15,
+    "head_lr": 0.001,
+    "weight_decay": 0.0001,
+    "seed": 42
+  },
+  "experiments": [
+    {
+      "id": "imagenet1k_frozen",
+      "description": "CAFormer-S18 frozen ImageNet-1K backbone with a linear regression head",
+      "parameters": {}
+    }
+  ]
+}

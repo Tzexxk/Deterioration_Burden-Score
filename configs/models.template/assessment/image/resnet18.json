@@ -7,10 +7,10 @@
   },
   "experiments": [
     {
-      "id": "baseline",
+      "id": "imagenet1k_frozen",
       "description": "ResNet18 frozen ImageNet-1K development assessment",
       "parameters": {
-        "train_id": "baseline"
+        "train_id": "imagenet1k_frozen"
       }
     }
   ]

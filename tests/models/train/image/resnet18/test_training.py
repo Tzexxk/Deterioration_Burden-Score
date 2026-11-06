@@ -20,6 +20,7 @@ from src.models.train.image.resnet18.training import fit_fold, run_training
 from tests.models.train.ehr.catboost import test_training
 
 CONFIG = "configs/models/train/image/resnet18.json"
+CANDIDATE = "imagenet1k_frozen"
 
 
 class ResNet18TrainingTests(unittest.TestCase):
@@ -119,9 +120,9 @@ class ResNet18TrainingTests(unittest.TestCase):
         threads = torch.get_num_threads()
         self.addCleanup(torch.set_num_threads, threads)
         torch.set_num_threads(1)
-        result = run_training(layout, CONFIG, "baseline")["experiments"][0]
+        result = run_training(layout, CONFIG, CANDIDATE)["experiments"][0]
         self.assertEqual(result["status"], "complete", result)
-        store = experiment_store(layout, "train", "image", "resnet18", "baseline")
+        store = experiment_store(layout, "train", "image", "resnet18", CANDIDATE)
         manifest = store.validate(result["manifest"])
         self.assertEqual(manifest["inputs"], [{"manifest": release.acceptance["self"], "generation": 1}])
         folder = layout.resolve(result["manifest"]).parent
@@ -133,14 +134,14 @@ class ResNet18TrainingTests(unittest.TestCase):
             self.assertEqual([row["stage"] for row in read_json(directory / "history.json")["epochs"]], [1, 2])
             interface = read_json(directory / "interface.json")
             self.assertNotIn("sample-00", interface["train_sample_ids"] + interface["validation_sample_ids"])
-        self.assertEqual(run_training(layout, CONFIG, "baseline")["experiments"][0]["status"], "unchanged")
+        self.assertEqual(run_training(layout, CONFIG, CANDIDATE)["experiments"][0]["status"], "unchanged")
 
         config_path = "configs/models/assessment/image/resnet18.json"
         assessment_template = template.parent.parent.parent / "assessment/image/resnet18.json"
         write_json(layout.path("project", config_path), dict(read_json(assessment_template), data_release="v1_r3"))
-        assessment = run_assessment(layout, config_path, "baseline")["experiments"][0]
+        assessment = run_assessment(layout, config_path, CANDIDATE)["experiments"][0]
         self.assertEqual(assessment["status"], "complete", assessment)
-        assessment_store = experiment_store(layout, "assessment", "image", "resnet18", "baseline")
+        assessment_store = experiment_store(layout, "assessment", "image", "resnet18", CANDIDATE)
         assessed = assessment_store.validate(assessment["manifest"])
         self.assertEqual(assessed["inputs"], [{"manifest": result["manifest"], "generation": 1}])
         directory = layout.resolve(assessment["manifest"]).parent
@@ -164,8 +165,8 @@ class ResNet18TrainingTests(unittest.TestCase):
         self.assertEqual(directory, layout.path("outputs", "models/assessment/image/comparison/paired_image"))
         self.assertEqual(len(list(directory.rglob("*.svg"))), 18)
         metrics = read_json(directory / "threshold_free/metrics.json")
-        self.assertEqual(set(metrics), {"baseline_mean", "resnet18/baseline"})
-        self.assertEqual(metrics["resnet18/baseline"]["rmse"]["valid_draws"], 12)
+        self.assertEqual(set(metrics), {"baseline_mean", f"resnet18/{CANDIDATE}"})
+        self.assertEqual(metrics[f"resnet18/{CANDIDATE}"]["rmse"]["valid_draws"], 12)
         self.assertTrue(any(message.startswith("Validating assessments: 1/1") for message in progress))
         self.assertTrue(any(message.startswith("Bootstrap (12 draws): 2/2") for message in progress))
         self.assertTrue(any(message.startswith("Writing SVGs: 18/18") for message in progress))
@@ -173,14 +174,14 @@ class ResNet18TrainingTests(unittest.TestCase):
 
         config_file = layout.path("project", config_path)
         config = read_json(config_file)
-        config["experiments"].append({"id": "second", "parameters": {"train_id": "baseline"}})
+        config["experiments"].append({"id": "second", "parameters": {"train_id": CANDIDATE}})
         write_json(config_file, config)
         second = run_assessment(layout, config_path, "second")["experiments"][0]
         self.assertEqual(second["status"], "complete", second)
         write_json(layout.path("outputs", "models/assessment/image/other/incomplete/manifest.json"),
                    {"status": "running"})
 
-        primary, extra = "resnet18/baseline", "resnet18/second"
+        primary, extra = f"resnet18/{CANDIDATE}", "resnet18/second"
         selected = run_comparison(layout, "selected_image", assessment_ids=[extra, primary], draws=12)
         self.assertEqual(selected["status"], "complete", selected)
         store = experiment_store(layout, "assessment", "image", "comparison", "selected_image")
@@ -201,7 +202,7 @@ class ResNet18TrainingTests(unittest.TestCase):
             ([primary, primary], "DUPLICATE_ASSESSMENT"),
             (["resnet18/missing"], "ASSESSMENT_NOT_FOUND"),
             (["other/incomplete"], "UPSTREAM_INCOMPLETE"),
-            (["baseline"], "INVALID_ASSESSMENT_SELECTION"),
+            ([CANDIDATE], "INVALID_ASSESSMENT_SELECTION"),
         ]:
             with self.subTest(requested=requested), self.assertRaisesRegex(PipelineError, error):
                 run_comparison(layout, "bad_selection", assessment_ids=requested, draws=12)

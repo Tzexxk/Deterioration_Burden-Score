@@ -20,7 +20,7 @@
         "pretraining": "IMAGENET1K_V1",
         "weights": {
           "root": "model_weights",
-          "path": "densenet121-a639ec97.pth"
+          "path": "DenseNet-121/densenet121-a639ec97.pth"
         }
       }
     },
@@ -31,7 +31,7 @@
         "pretraining": "densenet121-res224-chex",
         "weights": {
           "root": "model_weights",
-          "path": "chex-densenet121-d121-tw-lr001-rot45-tr15-sc15-seed0-best.pt"
+          "path": "DenseNet-121/chex-densenet121-d121-tw-lr001-rot45-tr15-sc15-seed0-best.pt"
         }
       }
     }

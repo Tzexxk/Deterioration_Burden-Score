@@ -4,7 +4,7 @@
     "image_source": {"kind": "package"},
     "weights": {
       "root": "model_weights",
-      "path": "resnet18-f37072fd.pth"
+      "path": "ResNet-18/resnet18-f37072fd.pth"
     },
     "device": "auto",
     "num_workers": 0,
@@ -20,8 +20,8 @@
   },
   "experiments": [
     {
-      "id": "baseline",
-      "description": "ResNet18 frozen ImageNet-1K development CV baseline",
+      "id": "imagenet1k_frozen",
+      "description": "ResNet18 frozen ImageNet-1K development CV candidate",
       "parameters": {}
     }
   ]
