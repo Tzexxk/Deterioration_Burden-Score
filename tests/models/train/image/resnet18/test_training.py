@@ -10,6 +10,7 @@ from torchvision.models import resnet18
 
 from src.common.manifest import write_json
 from src.common.paths import PipelineError, read_json
+from src.models.assessment.image.comparison import run_comparison
 from src.models.assessment.image.resnet18.assessment import run_assessment
 from src.models.experiments import experiment_store
 from src.models.image_data import load_image_package
@@ -124,3 +125,20 @@ class ResNet18TrainingTests(unittest.TestCase):
         self.assertTrue((directory / "training_history.svg").is_file())
         for rule in ("sensitivity", "specificity"):
             self.assertTrue((directory / "threshold_based" / f"{rule}_80" / "confusion_matrices.svg").is_file())
+
+        progress = []
+        comparison = run_comparison(layout, "paired_image", draws=12, progress=progress.append)
+        self.assertEqual(comparison["status"], "complete", comparison)
+        comparison_store = experiment_store(layout, "assessment", "image", "comparison", "paired_image")
+        compared = comparison_store.validate(comparison["manifest"])
+        self.assertEqual(compared["inputs"], [{"manifest": assessment["manifest"], "generation": 1}])
+        directory = layout.resolve(comparison["manifest"]).parent
+        self.assertEqual(directory, layout.path("outputs", "models/assessment/image/comparison/paired_image"))
+        self.assertEqual(len(list(directory.rglob("*.svg"))), 18)
+        metrics = read_json(directory / "threshold_free/metrics.json")
+        self.assertEqual(set(metrics), {"baseline_mean", "resnet18/baseline"})
+        self.assertEqual(metrics["resnet18/baseline"]["rmse"]["valid_draws"], 12)
+        self.assertTrue(any(message.startswith("Validating assessments: 1/1") for message in progress))
+        self.assertTrue(any(message.startswith("Bootstrap (12 draws): 2/2") for message in progress))
+        self.assertTrue(any(message.startswith("Writing SVGs: 18/18") for message in progress))
+        self.assertEqual(run_comparison(layout, "paired_image", draws=12)["status"], "unchanged")

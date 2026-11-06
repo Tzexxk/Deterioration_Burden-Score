@@ -8,7 +8,7 @@ from threadpoolctl import threadpool_limits
 from src.common.config import load_model_config
 from src.common.manifest import write_json
 from src.common.paths import identifier, read_json, require
-from src.models.assessment.ehr.comparison import BASELINE, RULES
+from src.models.assessment.comparison import BASELINE, RULES
 from src.models.assessment.ehr.evaluation import metric_pair, training_source
 from src.models.assessment.operating_points import (
     measure_operating_point,

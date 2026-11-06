@@ -72,7 +72,7 @@ def image_source(release, selection, names, master_shape):
         "processed", manifest_path.relative_to(layout.roots["processed"]).as_posix()), "release": manifest}
 
 
-def load_image_package(release, selection):
+def load_image_cohort(release):
     metadata = read_json(release.package_file("dataset_metadata.json"))
     key = release.store.data.key
     inherited = metadata.get("parent_release_id", key)
@@ -81,14 +81,19 @@ def load_image_package(release, selection):
             and metadata.get("target_column") == "burden_score" and metadata.get("horizon_hours") == 72
             and metadata.get("split_unit") == "subject_id" and metadata.get("split_values") == list(SPLITS),
             "INVALID_IMAGE_PACKAGE", "Unexpected frozen release, label or split contract")
+    sample_table, samples = load_samples(release)
+    cv = load_cv(release, metadata, sample_table, inherited)
+    return metadata, samples, cv
+
+
+def load_image_package(release, selection):
+    metadata, samples, cv = load_image_cohort(release)
     image = metadata.get("image", {})
     shape = image.get("shape")
     require(isinstance(shape, list) and len(shape) == 2 and all(type(size) is int and size > 0 for size in shape)
             and image.get("format") == "npy" and image.get("dtype") == "float32"
             and image.get("value_range") == [0.0, 1.0] and image.get("model_normalization_applied") is False,
             "INVALID_IMAGE_PACKAGE", "Expected NPY image metadata with a declared float32 shape and range")
-    sample_table, samples = load_samples(release)
-    cv = load_cv(release, metadata, sample_table, inherited)
     paths = samples.image_relpath.tolist()
     require(len({name.casefold() for name in paths}) == len(paths)
             and all(relative(name) == name and name.startswith("images/") and name.endswith(".npy") for name in paths),

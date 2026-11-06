@@ -5,7 +5,7 @@ import pandas as pd
 from threadpoolctl import threadpool_limits
 
 from src.common.paths import identifier, read_json, require
-from src.models.assessment.ehr.comparison import (
+from src.models.assessment.comparison import (
     BASELINE,
     RULES,
     calculate_comparison,
