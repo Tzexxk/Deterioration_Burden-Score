@@ -1,0 +1,31 @@
+{
+  "data_release": "v1_r3",
+  "defaults": {
+    "image_source": {
+      "kind": "variant",
+      "batch": "initial",
+      "size": 224
+    },
+    "weights": {
+      "root": "model_weights",
+      "path": "resnet18-f37072fd.pth"
+    },
+    "device": "auto",
+    "num_workers": 0,
+    "batch_size": 32,
+    "head_only_epochs": 5,
+    "max_epochs": 50,
+    "patience": 10,
+    "head_lr": 0.001,
+    "layer4_lr": 0.0001,
+    "weight_decay": 0.0001,
+    "seed": 42
+  },
+  "experiments": [
+    {
+      "id": "baseline",
+      "description": "ResNet18 development CV baseline",
+      "parameters": {}
+    }
+  ]
+}

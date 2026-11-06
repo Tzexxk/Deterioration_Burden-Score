@@ -4,6 +4,7 @@
     "outputs": "outputs",
     "mimic_iv": "local_inputs/MIMIC-IV",
     "mimic_cxr": "local_inputs/MIMIC-CXR",
-    "mimic_note": "local_inputs/MIMIC-IV-NOTE"
+    "mimic_note": "local_inputs/MIMIC-IV-NOTE",
+    "model_weights": "local_inputs/model_weights"
   }
 }

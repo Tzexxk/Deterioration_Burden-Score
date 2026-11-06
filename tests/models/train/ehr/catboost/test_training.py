@@ -5,6 +5,7 @@ import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 
@@ -34,7 +35,7 @@ class CatBoostTrainingTests(unittest.TestCase):
         self.layout = Layout(root)
         self.store = ManifestStore(self.layout, data=DataContext(self.layout, 1, 3))
 
-    def publish(self, *, wrong_role=False, wrong_acceptance=False, different_test_mean=False):
+    def publish(self, *, wrong_role=False, wrong_acceptance=False, different_test_mean=False, image_shape=None):
         version = "v1_r2"
         schema = schema_for([], version)
         rows, indexed = [], []
@@ -68,6 +69,14 @@ class CatBoostTrainingTests(unittest.TestCase):
             package = work / "package"
             package.mkdir()
             pq.write_table(pa.Table.from_pylist(rows, schema=CV_SAMPLE_SCHEMA), package / "samples.parquet")
+            image_metadata = {}
+            if image_shape is not None:
+                image_metadata["image"] = {"format": "npy", "dtype": "float32", "shape": list(image_shape),
+                                           "value_range": [0.0, 1.0], "model_normalization_applied": False}
+                (package / "images").mkdir()
+                image = np.linspace(0, 1, np.prod(image_shape), dtype=np.float32).reshape(image_shape)
+                for row in rows:
+                    np.save(package / row["image_relpath"], image, allow_pickle=False)
             features = {"sample_id": pa.array([row["sample_id"] for row in reversed(rows)])}
             for column in schema["numeric_features"]:
                 features[column] = pa.array(range(11, -1, -1), type=pa.float32())
@@ -89,7 +98,7 @@ class CatBoostTrainingTests(unittest.TestCase):
                 ehr_preprocessing_applied=False, feature_counts=counts, files=sorted([*files, "dataset_metadata.json"]),
                 split_values=list(SPLITS), split_columns=list(FOLD_SPLIT_COLUMNS),
                 cross_validation=dict(indices_file=split.CV_INDICES, n_folds=5, split_column_semantics="per_fold",
-                                      patient_split_files=fold_files)))
+                                      patient_split_files=fold_files), **image_metadata))
         export = self.store.manifest_ref("step12", "export")
         with self.store.publish("step13", "validate", inputs=[export],
                                 details={"checks_passed": True, "training_package_accepted": True}) as work:
