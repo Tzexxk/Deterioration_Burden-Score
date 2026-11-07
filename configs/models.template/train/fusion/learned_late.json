@@ -1,0 +1,11 @@
+{
+  "data_release": "v1_r1",
+  "defaults": {
+    "ehr_source": {"model": "catboost", "assessment_id": "d2_l210"},
+    "image_source": {"model": "resnet50", "assessment_id": "selected_image"},
+    "round_policy": "training_median"
+  },
+  "experiments": [
+    {"id": "f3_nested_median", "description": "Nested base scores with training-scope median lengths", "parameters": {}}
+  ]
+}

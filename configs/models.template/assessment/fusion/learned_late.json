@@ -1,0 +1,13 @@
+{
+  "data_release": "v1_r1",
+  "defaults": {
+    "fixed_image_weights": [0.2, 0.4, 0.6, 0.8],
+    "sensitivity_target": 0.8,
+    "specificity_target": 0.8,
+    "bootstrap_draws": 5000,
+    "bootstrap_seed": 42
+  },
+  "experiments": [
+    {"id": "f3_nested_median", "description": "Nested F3a and F3b with matched controls", "parameters": {"train_id": "f3_nested_median"}}
+  ]
+}

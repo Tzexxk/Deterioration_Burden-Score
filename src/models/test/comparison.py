@@ -37,7 +37,7 @@ def discover(layout, modality, progress):
     return sources
 
 
-def load_results(package, sources):
+def load_results(package, sources, *, additional_inputs=()):
     rows = package.samples.iloc[package.cv["test_indices"]][SAMPLE_COLUMNS].reset_index(drop=True)
     development = package.samples.iloc[package.cv["development_indices"]]
     mean = float(development.burden_score.to_numpy(float).mean())
@@ -46,7 +46,8 @@ def load_results(package, sources):
         refit_ref = store.manifest_ref("test", "refit")
         refit = read_json(store.layout.resolve(refit_ref))
         require(refit["scope"] == store.scope
-                and manifest["inputs"] == [{"manifest": refit_ref, "generation": refit["generation"]}],
+                and manifest["inputs"] == [{"manifest": refit_ref, "generation": refit["generation"]},
+                                           *additional_inputs],
                 "INVALID_TEST_EVALUATION", f"Fixed-test evaluation must bind its refit: {name}")
         frozen = read_json(output(store, refit, "thresholds.json"))
         actual = pd.read_parquet(output(store, manifest, "test_predictions.parquet"))

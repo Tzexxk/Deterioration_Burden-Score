@@ -87,6 +87,7 @@ class FusionFixture:
         with self.image_store.publish("train", "run", inputs=[self.release.acceptance["self"]],
                                        details={"data_release": "v1_r3", "image_shape": [4, 4]}) as work:
             write_json(work / "effective_configuration.json", snapshot)
+            write_json(work / "training_summary.json", {"folds": [{"fold": f["fold"], "best_epoch": 1} for f in self.package.cv["folds"]]})
             for fold in self.package.cv["folds"]:
                 folder = work / f"fold_{fold['fold']}"
                 folder.mkdir()
