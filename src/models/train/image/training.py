@@ -138,7 +138,7 @@ def run_epoch(model, loader, device, optimizer=None, *, training_loss=None, trai
 
 def fit_epochs(package, fold, config, model, optimizer, folder, *, label, device,
                transform=imagenet_input, augment=False, schedule=None, head_only_epochs=None,
-               training_loss=None, training_step=None):
+               training_loss=None, training_step=None, select_last=False):
     seed = config["seed"]
     train, validation = (
         DataLoader(FoldImages(package, fold[f"{role}_indices"], augment=augment and role == "train",
@@ -161,7 +161,8 @@ def fit_epochs(package, fold, config, model, optimizer, folder, *, label, device
         train_metrics, _, _ = run_epoch(model, train, device, optimizer, training_loss=training_loss,
                                         training_step=training_step)
         valid_metrics, _, _ = run_epoch(model, validation, device)
-        if valid_metrics["rmse"] < best_rmse:
+        selected = epoch == config["max_epochs"] if select_last else valid_metrics["rmse"] < best_rmse
+        if selected:
             best_epoch, best_rmse, stale = epoch, valid_metrics["rmse"], 0
             torch.save({key: value.detach().cpu() for key, value in model.state_dict().items()}, checkpoint)
         elif stage2:
@@ -169,9 +170,9 @@ def fit_epochs(package, fold, config, model, optimizer, folder, *, label, device
         history.append({"epoch": epoch, "stage": 2 if stage2 else 1, "train": train_metrics, "validation": valid_metrics})
         print(f"{label} epoch={epoch}/{config['max_epochs']} train RMSE={train_metrics['rmse']:.6f} "
               f"validation RMSE={valid_metrics['rmse']:.6f} best_epoch={best_epoch}", flush=True)
-        if stage2 and stale >= config["patience"]:
+        if not select_last and stage2 and stale >= config["patience"]:
             break
-        if (early_stopping is not None
+        if (not select_last and early_stopping is not None
                 and epoch - max(best_epoch, early_stopping["min_epochs"]) >= early_stopping["patience"]):
             print(f"{label} early stop at epoch={epoch} best_epoch={best_epoch}", flush=True)
             break
@@ -207,12 +208,16 @@ def validate_pretrained_state(state):
     return state
 
 
-def fit_frozen_head(package, fold, config, model, head, folder, *, label, device,
-                    transform=imagenet_input, training_loss=None, training_step=None):
+def frozen_head_optimizer(model, head, config, device):
     model.to(device).eval().requires_grad_(False)
     head.requires_grad_(True)
-    optimizer = torch.optim.AdamW(head.parameters(), lr=config["head_lr"],
-                                  weight_decay=config["weight_decay"], foreach=False, fused=False)
+    return torch.optim.AdamW(head.parameters(), lr=config["head_lr"],
+                             weight_decay=config["weight_decay"], foreach=False, fused=False)
+
+
+def fit_frozen_head(package, fold, config, model, head, folder, *, label, device,
+                    transform=imagenet_input, training_loss=None, training_step=None):
+    optimizer = frozen_head_optimizer(model, head, config, device)
     return fit_epochs(package, fold, config, model, optimizer, folder, label=label, device=device,
                       transform=transform, training_loss=training_loss, training_step=training_step)
 

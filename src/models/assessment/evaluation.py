@@ -65,7 +65,8 @@ def evaluate_folds(store, manifest, package, model, predict):
     return predictions, {"prediction_role": "oof_validation", "folds": fold_metrics, "pooled_oof": pooled}, histories
 
 
-def publish_assessment(layout, config_path, experiment, package, model, predict, plot_history, *, modality, source):
+def publish_assessment(layout, config_path, experiment, package, model, predict, plot_history, *, modality, source,
+                       prepare_predict=None):
     params = experiment["parameters"]
     train_store, train = source
     upstream = {"manifest": train["self"], "generation": train["generation"]}
@@ -77,6 +78,8 @@ def publish_assessment(layout, config_path, experiment, package, model, predict,
         return existing
     with store.publish("assessment", "run", inputs=[train["self"]], configs=[layout.ref("project", config_path)],
                        details={"data_release": experiment["data_release"], "train_id": params["train_id"]}) as work:
+        if prepare_predict is not None:
+            predict = prepare_predict(work, predict)
         predictions, metrics, histories = evaluate_folds(train_store, train, package, model, predict)
         write_json(work / "effective_configuration.json", experiment)
         write_json(work / "metrics.json", metrics)

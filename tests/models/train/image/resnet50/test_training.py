@@ -14,6 +14,7 @@ from torchvision.models.resnet import BasicBlock, ResNet
 from src.common.manifest import write_json
 from src.common.paths import read_json
 from src.models.assessment.image.resnet50.assessment import run_assessment
+from src.models.assessment.image.resnet50.calibration import fit_affine
 from src.models.train.image import training as image_training
 from src.models.train.image.resnet50 import training
 from tests.models.train.ehr.catboost import test_training
@@ -28,6 +29,13 @@ def small_resnet(*, weights):
 
 
 class ResNet50TrainingTests(unittest.TestCase):
+    def test_calibration_fits_positive_slope_and_falls_back_on_reverse_order(self):
+        scores = torch.tensor([0., 1., 2.]).numpy()
+        self.assertEqual(fit_affine(scores, 1 + 2 * scores),
+                         {"intercept": 1., "slope": 2., "identity_fallback": False})
+        self.assertEqual(fit_affine(scores, -scores),
+                         {"intercept": 0., "slope": 1., "identity_fallback": True})
+
     def test_mixed_pool_preserves_channels_and_blends_spatial_summaries(self):
         features = torch.tensor([[[[0., 0.], [0., 4.]], [[2., 2.], [2., 2.]]]])
         torch.testing.assert_close(training.MixedGlobalPool(0.25)(features),
@@ -155,6 +163,12 @@ class ResNet50TrainingTests(unittest.TestCase):
             train["experiments"].append({"id": key, "parameters": {
                 **parameters, "max_epochs": 2, "early_stopping": {"min_epochs": 1, "patience": 1}}})
             assessment["experiments"].append({"id": key, "parameters": {"train_id": key}})
+        combinations = {"event_layer4": ("c5", {"head_only_epochs": 1, "layer4_lr": 3e-5}),
+                        "ordinal_mean": ("c3_long", {"mean_output_init": True})}
+        for key, (source, options) in combinations.items():
+            parameters = next(item["parameters"] for item in train["experiments"] if item["id"] == source)
+            train["experiments"].append({"id": key, "parameters": {**parameters, **options}})
+            assessment["experiments"].append({"id": key, "parameters": {"train_id": key}})
         write_json(layout.path("project", train_path), train)
         write_json(layout.path("project", assessment_path), assessment)
 
@@ -164,9 +178,14 @@ class ResNet50TrainingTests(unittest.TestCase):
         def check_before_fit(package, fold, config, model, head, folder, **kwargs):
             if config.get("mean_output_init"):
                 initialized_folds.append(fold["fold"])
-                self.assertEqual(torch.count_nonzero(head.weight).item(), 0)
-                features = torch.arange(head.in_features, dtype=head.weight.dtype).reshape(1, -1)
-                torch.testing.assert_close(head(features), torch.tensor([[1.5]]))
+                ordinal_head = isinstance(head, training.OrdinalHead)
+                projection = head.projection if ordinal_head else head
+                self.assertEqual(torch.count_nonzero(projection.weight).item(), 0)
+                features = torch.arange(projection.in_features, dtype=projection.weight.dtype).reshape(1, -1)
+                output = head(features)
+                if ordinal_head:
+                    output = head.score(output)
+                torch.testing.assert_close(output, torch.tensor([[1.5]]))
             return fit_frozen_head(package, fold, config, model, head, folder, **kwargs)
 
         with (patch.object(training, "resnet50", small_resnet),
@@ -186,9 +205,9 @@ class ResNet50TrainingTests(unittest.TestCase):
             for call in lds.call_args_list:
                 self.assertEqual(call.args[0].tolist(), [0, 3] * 4)
             self.assertEqual(lds_loss.call_count, 10)
-            self.assertEqual(ordinal.call_count, 30)
-            self.assertEqual(initialized_folds, [1, 2, 3, 4, 5])
-            self.assertEqual(event.call_count, 30)
+            self.assertEqual(ordinal.call_count, 50)
+            self.assertEqual(initialized_folds, [1, 2, 3, 4, 5] * 2)
+            self.assertEqual(event.call_count, 50)
             self.assertEqual(affine.call_count, 40)  # Eight training samples, one epoch, five folds.
             event_run = next(item for item in result["experiments"] if item["id"] == "c4")
             event_dir = layout.resolve(event_run["manifest"]).parent
@@ -199,7 +218,32 @@ class ResNet50TrainingTests(unittest.TestCase):
                     self.assertEqual(set(targets), set(train_ids))
                     for sample_id, label in zip(call.args[3], call.args[2].flatten(), strict=True):
                         self.assertEqual(targets[sample_id], [0, 0, 0, int(label.item() == 3)])
+            assessment["experiments"].append({"id": "s", "parameters": {"train_id": "event_layer4",
+                                                                          "calibration_epochs": 2}})
+            write_json(layout.path("project", assessment_path), assessment)
+            calibrated = run_assessment(layout, assessment_path, "s")
+            self.assertEqual(calibrated["status"], "complete", calibrated)
         folders = {item["id"]: layout.resolve(item["manifest"]).parent for item in result["experiments"]}
+        calibrated_folder = layout.resolve(calibrated["experiments"][0]["manifest"]).parent
+        self.assertEqual(read_json(calibrated_folder / "metrics.json")["pooled_oof"]["studies"], 10)
+        self.assertFalse(list(calibrated_folder.rglob("*.pt")))
+        for fold in range(1, 6):
+            interface = read_json(folders["event_layer4"] / f"fold_{fold}/interface.json")
+            fit = read_json(calibrated_folder / f"calibration/fold_{fold}/calibration.json")
+            self.assertGreater(fit["slope"], 0)
+            self.assertEqual(len(fit["inner_folds"]), 4)
+            predicted = []
+            for inner in fit["inner_folds"]:
+                train_ids, validation_ids = set(inner["train_sample_ids"]), inner["validation_sample_ids"]
+                self.assertTrue(train_ids.isdisjoint(validation_ids))
+                self.assertEqual(train_ids | set(validation_ids), set(interface["train_sample_ids"]))
+                self.assertEqual(inner["best_epoch"], 2)
+                predicted.extend(validation_ids)
+            self.assertCountEqual(predicted, interface["train_sample_ids"])
+        for fold in range(1, 6):
+            history = f"fold_{fold}/history.json"
+            self.assertEqual(read_json(folders["event_layer4"] / history)["epochs"][:1],
+                             read_json(folders["c5"] / history)["epochs"][:1])
         for key, source in extensions.items():
             for fold in range(1, 6):
                 history = f"fold_{fold}/history.json"
@@ -207,11 +251,11 @@ class ResNet50TrainingTests(unittest.TestCase):
                                  read_json(folders[source] / history)["epochs"])
         for trained, assessed in zip(result["experiments"], evaluated["experiments"], strict=True):
             key = trained["id"]
-            variant = extensions.get(key, key)
+            variant = extensions.get(key, {"event_layer4": "c4", "ordinal_mean": "c3"}.get(key, key))
             pretrained = xray if variant == "xrv_all_frozen" else imagenet
             folder = layout.resolve(trained["manifest"]).parent
             state = torch.load(folder / "fold_1/best.pt", map_location="cpu", weights_only=True)
-            fine_tuned = key in {"b1", "b2", "b5"}
+            fine_tuned = key in {"b1", "b2", "b5", "event_layer4"}
             for name, tensor in pretrained.state_dict().items():
                 if name.startswith("fc."):
                     continue

@@ -43,14 +43,30 @@ class OrdinalHead(nn.Module):
         self.register_buffer("score_steps", torch.diff(self.thresholds, prepend=self.thresholds.new_zeros(1)),
                              persistent=False)
 
-    def forward(self, features):
-        cutpoints = [self.first_cutpoint]
+    def cutpoints(self, first):
+        cutpoints = [first]
         for gap in F.softplus(self.cutpoint_gaps).unbind():
             cutpoints.append(cutpoints[-1] + gap)
-        return self.projection(features) - torch.stack(cutpoints)
+        return torch.stack(cutpoints)
+
+    def forward(self, features):
+        return self.projection(features) - self.cutpoints(self.first_cutpoint)
 
     def score(self, logits):
         return (logits.sigmoid() * self.score_steps).sum(dim=1, keepdim=True)
+
+    @torch.no_grad()
+    def initialize_mean(self, mean):
+        self.projection.weight.zero_()
+        lower, upper = -100., 100.
+        for _ in range(32):
+            midpoint = (lower + upper) / 2
+            logits = -self.cutpoints(self.first_cutpoint.new_tensor(midpoint)).unsqueeze(0)
+            if self.score(logits).item() > mean:
+                lower = midpoint
+            else:
+                upper = midpoint
+        self.first_cutpoint.fill_((lower + upper) / 2)
 
 
 class EventHead(nn.Linear):
@@ -67,6 +83,10 @@ class BurdenHeadResNet(nn.Module):
         super().__init__()
         self.backbone = backbone
         self.fc = head
+
+    @property
+    def layer4(self):
+        return self.backbone.layer4
 
     def logits(self, image):
         return self.fc(self.backbone(image))
@@ -159,15 +179,20 @@ def validate_settings(config):
         rule = config["early_stopping"]
         require(isinstance(rule, dict) and set(rule) == {"min_epochs", "patience"}
                 and all(type(value) is int and value > 0 for value in rule.values())
-                and rule["min_epochs"] + rule["patience"] <= config["max_epochs"] and "layer4_lr" not in config,
-                "INVALID_IMAGE_CONFIG", "Early stopping requires a frozen encoder and a valid epoch budget")
+                and rule["min_epochs"] + rule["patience"] <= config["max_epochs"]
+                and ("layer4_lr" not in config or "event_components" in config),
+                "INVALID_IMAGE_CONFIG", "Early stopping requires a valid epoch budget and supported training strategy")
     if "update_layer4_bn" in config:
         require(config["update_layer4_bn"] is True and "layer4_lr" in config,
                 "INVALID_IMAGE_CONFIG", "Layer4 BatchNorm updates require layer4 fine-tuning")
-    for option in ("mean_output_init", "event_components"):
-        if option in config:
-            require(config[option] is True and (config.keys() & variants) == {option},
-                    "INVALID_IMAGE_CONFIG", f"{option} must be true and used alone with the frozen baseline")
+    if "mean_output_init" in config:
+        require(config["mean_output_init"] is True
+                and not (config.keys() & variants) - {"mean_output_init", "ordinal_thresholds"},
+                "INVALID_IMAGE_CONFIG", "Mean initialization requires a frozen linear or ordinal head")
+    if "event_components" in config:
+        require(config["event_components"] is True
+                and not (config.keys() & variants) - {"event_components", "layer4_lr", "head_only_epochs"},
+                "INVALID_IMAGE_CONFIG", "Event supervision supports a frozen encoder or layer4 fine-tuning")
     if "mlp_hidden_size" in config:
         hidden = config["mlp_hidden_size"]
         require(type(hidden) is int and hidden > 0, "INVALID_IMAGE_CONFIG", "MLP hidden size must be positive")
@@ -226,16 +251,28 @@ def set_stage(model, epoch, head_only_epochs, *, update_layer4_bn=False):
                 module.train(fine_tuning)
 
 
-def fit_fold(package, fold, config, weights, folder, *, label):
+def layer4_optimizer(model, config, device):
+    model.to(device).eval().requires_grad_(False)
+    model.fc.requires_grad_(True)
+    return torch.optim.AdamW(
+        [{"params": model.fc.parameters(), "lr": config["head_lr"]},
+         {"params": model.layer4.parameters(), "lr": config["layer4_lr"]}],
+        weight_decay=config["weight_decay"], foreach=False, fused=False)
+
+
+def fit_fold(package, fold, config, weights, folder, *, label, select_last=False):
     device = configure_runtime(config["device"], config["seed"])
     model = build_model(config, weights)
     transform = input_transform(config)
     training_loss = partial(weighted_mse, **config["high_score_weight"]) if "high_score_weight" in config else None
     training_step = ordinal_step if "ordinal_thresholds" in config else None
     if "mean_output_init" in config:
-        train_mean = package.samples.iloc[fold["train_indices"]].burden_score.mean()
-        nn.init.zeros_(model.fc.weight)
-        nn.init.constant_(model.fc.bias, float(train_mean))
+        train_mean = float(package.samples.iloc[fold["train_indices"]].burden_score.mean())
+        if "ordinal_thresholds" in config:
+            model.fc.initialize_mean(train_mean)
+        else:
+            nn.init.zeros_(model.fc.weight)
+            nn.init.constant_(model.fc.bias, train_mean)
     if "event_components" in config:
         rows = package.samples.iloc[fold["train_indices"]]
         training_step = partial(event_step, targets_by_id=event_targets(rows))
@@ -244,16 +281,12 @@ def fit_fold(package, fold, config, weights, folder, *, label):
         weights_by_score = lds_weights(labels, **config["lds"]).to(device)
         training_loss = partial(lds_mse, weights=weights_by_score)
     if "layer4_lr" in config:
-        model.to(device).eval().requires_grad_(False)
-        model.fc.requires_grad_(True)
-        optimizer = torch.optim.AdamW(
-            [{"params": model.fc.parameters(), "lr": config["head_lr"]},
-             {"params": model.layer4.parameters(), "lr": config["layer4_lr"]}],
-            weight_decay=config["weight_decay"], foreach=False, fused=False)
+        optimizer = layer4_optimizer(model, config, device)
         return fit_epochs(package, fold, {**config, "patience": config["max_epochs"]}, model, optimizer, folder,
                           label=label, device=device, transform=transform,
                           schedule=partial(set_stage, update_layer4_bn=config.get("update_layer4_bn", False)),
-                          head_only_epochs=config["head_only_epochs"], training_loss=training_loss)
+                          head_only_epochs=config["head_only_epochs"], training_loss=training_loss,
+                          training_step=training_step, select_last=select_last)
     return fit_frozen_head(package, fold, config, model, model.fc, folder, label=label, device=device,
                            transform=transform, training_loss=training_loss, training_step=training_step)
 

@@ -67,10 +67,15 @@ def checkpoint_prediction(store, manifest, package, fold, *, config, candidate, 
 
 
 def assess_model(layout, config_path, selected, model, build_model, input_transform,
-                 runtime_versions=image_runtime_versions):
+                 runtime_versions=image_runtime_versions, prepare_calibration=None):
     experiments = read_batch(layout, config_path, selected)
     for experiment in experiments:
-        validate_parameters(experiment)
+        params = dict(experiment["parameters"])
+        if prepare_calibration is not None and "calibration_epochs" in params:
+            epochs = params.pop("calibration_epochs")
+            require(type(epochs) is int and epochs > 0, "INVALID_ASSESSMENT_CONFIG",
+                    "Calibration epochs must be a positive integer")
+        validate_parameters({**experiment, "parameters": params})
     release = ReleasedData.load(layout, experiments[0]["data_release"])
 
     def assess(experiment):
@@ -90,7 +95,11 @@ def assess_model(layout, config_path, selected, model, build_model, input_transf
         predict = partial(checkpoint_prediction, config=config, candidate=candidate, build_model=build_model,
                           transform=input_transform(config))
         plot = partial(plot_history, round_label="Epoch")
+        prepare_predict = None
+        if "calibration_epochs" in experiment["parameters"]:
+            prepare_predict = partial(prepare_calibration, layout=layout, config=config, candidate=candidate,
+                                      epochs=experiment["parameters"]["calibration_epochs"])
         return publish_assessment(layout, config_path, experiment, package, model, predict, plot,
-                                  modality="image", source=source)
+                                  modality="image", source=source, prepare_predict=prepare_predict)
 
     return run_model_batch(layout, "assessment", "image", model, experiments, assess)

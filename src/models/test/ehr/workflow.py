@@ -9,24 +9,11 @@ from threadpoolctl import threadpool_limits
 from src.common.config import load_model_config
 from src.common.manifest import write_json
 from src.common.paths import identifier, read_json, require
-from src.models.assessment.comparison import BASELINE, RULES
-from src.models.assessment.ehr.evaluation import metric_pair, training_source
-from src.models.assessment.operating_points import (
-    measure_operating_point,
-    operating_point,
-    rule_folder,
-)
-from src.models.assessment.plots import confusion_plot
+from src.models.assessment.ehr.evaluation import training_source
 from src.models.ehr_data import checked_input_summary, load_package
-from src.models.ehr_metrics import ENDPOINTS
 from src.models.experiments import completed_result, experiment_store
 from src.models.released_data import ReleasedData
-
-SAMPLE_COLUMNS = ["sample_id", "subject_id", "hadm_id", "study_id", "burden_score", *ENDPOINTS]
-
-
-def output(store, manifest, name):
-    return store.layout.resolve(store.output_ref(manifest, name))
+from src.models.test.evaluation import SAMPLE_COLUMNS, frozen_thresholds, output, write_fixed_evaluation
 
 
 def run_refit(layout, config_path, config, package, model, fit, predict):
@@ -58,16 +45,8 @@ def run_refit(layout, config_path, config, package, model, fit, predict):
     features = package.features.iloc[development]
     y = samples.burden_score.to_numpy(float)
     mean = float(y.mean())
-    baseline = np.full(len(y), mean)
     points = read_json(output(assessment_store, assessment, "operating_points.json"))
-    thresholds = {rule: {"model": {}, BASELINE: {}} for rule in RULES}
-    for rule in RULES:
-        for endpoint in ENDPOINTS:
-            model_point = points[rule]["model"][endpoint]
-            target = model_point["target"]
-            thresholds[rule]["model"][endpoint] = {field: model_point[field] for field in ("target", "threshold", "comparison")}
-            point = operating_point(samples[endpoint].to_numpy(bool), baseline, rule, target)
-            thresholds[rule][BASELINE][endpoint] = {field: point[field] for field in ("target", "threshold", "comparison")}
+    thresholds = frozen_thresholds(samples, mean, points)
 
     rounds = None
     if model in {"catboost", "xgboost"}:
@@ -125,27 +104,7 @@ def run_evaluate(layout, config_path, config, package, model, predict):
         with threadpool_limits(limits=1):
             raw = predict(package.features.iloc[indices], package.schema, summary["refit_rounds"], folder)
             require(raw.shape == (len(rows),) and np.isfinite(raw).all(), "INVALID_CHECKPOINT", "Invalid fixed-test predictions")
-        scores = {"model": raw, BASELINE: np.full(len(rows), summary["baseline_mean"])}
-        predictions = rows.assign(predicted_score=raw, postprocessed_score=np.clip(raw, 0, 8),
-                                  baseline_mean_score=scores[BASELINE])
-        predictions.to_parquet(work / "test_predictions.parquet", index=False)
-        write_json(work / "effective_configuration.json", config)
-        write_json(work / "summary.json", {"prediction_role": "fixed_test", "studies": len(rows),
-                   "patients": int(rows.subject_id.nunique()),
-                   "positive_studies": {name: int(rows[name].sum()) for name in ENDPOINTS},
-                   "baseline_mean": summary["baseline_mean"]})
-        write_json(work / "metrics.json", {name: metric_pair(rows, values) for name, values in scores.items()})
-        points = {}
-        for rule in RULES:
-            values = {name: {ep: measure_operating_point(rows[ep].to_numpy(bool), scores[name], point)
-                             for ep, point in endpoints.items()} for name, endpoints in threshold_payload[rule].items()}
-            target = values["model"][ENDPOINTS[0]]["target"]
-            folder = work / "threshold_based" / rule_folder(rule, target)
-            folder.mkdir(parents=True)
-            confusion_plot(values, folder / "confusion_matrices.svg",
-                           title=f"Fixed test · development {rule} target {target:.0%}")
-            points[rule] = values
-        write_json(work / "operating_points.json", points)
+        write_fixed_evaluation(work, config, rows, raw, summary["baseline_mean"], threshold_payload)
     return {"id": key, "status": "complete", "manifest": ref}
 
 
