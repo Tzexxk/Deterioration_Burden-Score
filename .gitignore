@@ -41,3 +41,10 @@ __pycache__/
 
 # Local image research plan.
 /IMAGE_RESEARCH_PLAN.local.md
+
+# Local image modality report.
+/IMAGE_SINGLE_MODAL_REPORT.local.docx
+
+# Local research reports.
+/EHR_Unimodal_Report.docx
+/DATA_PROCESSING_REPORT.local.docx

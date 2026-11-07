@@ -88,7 +88,7 @@ class ManifestStore:
             self.scope = {"kind": "data", "version": data.version, "run": data.run}
             self.prefix = f"data/{data.key}"
         else:
-            require(family in ("ehr", "image"), "INVALID_SCOPE", "Select ehr or image model family")
+            require(family in ("ehr", "image", "fusion"), "INVALID_SCOPE", "Select ehr, image or fusion model family")
             self.scope = {"kind": "model", "family": family, "experiment": identifier(experiment)}
             require((model_stage is None) == (model is None), "INVALID_SCOPE", "Model stage and model must be supplied together")
             if model_stage is not None:
@@ -120,7 +120,7 @@ class ManifestStore:
     @staticmethod
     def _model_prefix(scope):
         family = scope.get("family")
-        require(family in ("ehr", "image"), "INVALID_SCOPE", "Unknown model modality")
+        require(family in ("ehr", "image", "fusion"), "INVALID_SCOPE", "Unknown model modality")
         experiment = identifier(scope.get("experiment"))
         if "model_stage" not in scope and "model" not in scope:
             return f"models/{family}/{experiment}"

@@ -1,0 +1,7 @@
+{
+  "data_release": "v1_r1",
+  "defaults": {"sensitivity_target": 0.8, "specificity_target": 0.8, "plot_training_history": true},
+  "experiments": [
+    {"id": "f2_pca08", "description": "Development assessment of feature fusion", "parameters": {"train_id": "f2_pca08"}}
+  ]
+}

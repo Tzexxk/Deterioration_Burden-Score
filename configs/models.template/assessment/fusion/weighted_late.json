@@ -1,0 +1,20 @@
+{
+  "data_release": "v1_r1",
+  "defaults": {
+    "ehr_source": {"model": "catboost", "assessment_id": "d2_l210"},
+    "image_source": {"model": "resnet50", "assessment_id": "selected_image"},
+    "image_weight": 0.2,
+    "sensitivity_target": 0.8,
+    "specificity_target": 0.8,
+    "bootstrap_draws": 5000,
+    "bootstrap_seed": 42,
+    "decision_rules": {
+      "min_rmse_improvement_ehr": 0.01,
+      "max_mae_increase_ehr": 0.005,
+      "min_rmse_improvement_image": 0.01
+    }
+  },
+  "experiments": [
+    {"id": "f1_a020", "description": "Fixed 20% image score fusion with a matched EHR mean-shrinkage control", "parameters": {}}
+  ]
+}

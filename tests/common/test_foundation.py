@@ -19,6 +19,21 @@ from src.common.paths import Layout, PipelineError, portable
 
 
 class FoundationTests(unittest.TestCase):
+    def test_fusion_scope_binds_both_modalities_and_rejects_unknown_family(self):
+        sources = []
+        for family in ("ehr", "image"):
+            store = ManifestStore(self.layout, family=family, experiment="synthetic", model_stage="train", model="source")
+            with store.publish("train", "run") as work:
+                write_json(work / "synthetic.json", {"synthetic": True})
+            sources.append(store.manifest_ref("train", "run"))
+        fusion = ManifestStore(self.layout, family="fusion", experiment="f1", model_stage="assessment", model="weighted_late")
+        ref = fusion.manifest_ref("assessment", "run")
+        self.assertEqual(ref["path"], "models/assessment/fusion/weighted_late/f1/manifest.json")
+        with fusion.publish("assessment", "run", inputs=sources) as work:
+            write_json(work / "synthetic.json", {"synthetic": True})
+        self.assertEqual(fusion.validate(ref)["inputs"], [{"manifest": source, "generation": 1} for source in sources])
+        self.error("INVALID_SCOPE", lambda: ManifestStore(self.layout, family="unknown", experiment="f1"))
+
     def test_raw_slash_number_results_preserve_text_but_are_not_file_paths(self):
         for value in ("/14.", "/16.", "/18.", "/40."):
             self.assertEqual(portable(value), value)
