@@ -32,10 +32,11 @@ def imagenet_input(gray):
 
 
 class FoldImages(Dataset):
-    def __init__(self, package, indices, *, augment, transform=imagenet_input):
+    def __init__(self, package, indices, *, augment, transform=imagenet_input, weak_affine=None):
         self.package = package
         self.indices = indices
         self.augment = augment
+        self.weak_affine = weak_affine
         self.transform = transform
         rows = package.samples.iloc[indices]
         self.ids = rows.sample_id.tolist()
@@ -53,7 +54,19 @@ class FoldImages(Dataset):
             gray = TF.affine(gray, angle, translate, scale=1.0, shear=[0.0, 0.0],
                              interpolation=InterpolationMode.BILINEAR, fill=0.0)
             gray = TF.adjust_contrast(gray, torch.empty(()).uniform_(0.9, 1.1).item())
+        elif self.weak_affine is not None:
+            gray = apply_weak_affine(gray, **self.weak_affine)
         return self.transform(gray), torch.tensor([self.targets[index]]), self.ids[index]
+
+
+def apply_weak_affine(gray, *, probability, degrees, translate_fraction):
+    if torch.rand(()).item() >= probability:
+        return gray
+    angle = torch.empty(()).uniform_(-degrees, degrees).item()
+    offsets = [torch.empty(()).uniform_(-translate_fraction * size, translate_fraction * size).item()
+               for size in (gray.shape[-1], gray.shape[-2])]
+    return TF.affine(gray, angle, offsets, scale=1.0, shear=[0.0, 0.0],
+                     interpolation=InterpolationMode.BILINEAR, fill=0.0)
 
 
 def seed_worker(_worker_id):
@@ -86,7 +99,7 @@ def configure_runtime(requested, seed):
     return torch.device("cuda:0")
 
 
-def run_epoch(model, loader, device, optimizer=None):
+def run_epoch(model, loader, device, optimizer=None, *, training_loss=None, training_step=None):
     squared = absolute = 0.0
     ids, predictions = [], []
     training = optimizer is not None
@@ -97,12 +110,17 @@ def run_epoch(model, loader, device, optimizer=None):
             image, labels = image.to(device), labels.to(device)
             if training:
                 optimizer.zero_grad(set_to_none=True)
-            scores = model(image)
+            if training and training_step is not None:
+                scores, loss = training_step(model, image, labels, batch_ids)
+            else:
+                scores, loss = model(image), None
             require(scores.shape == labels.shape and bool(torch.isfinite(scores).all()),
                     "INVALID_IMAGE_PREDICTIONS", "Expected finite scalar scores for every image")
             error = scores - labels
             if training:
-                error.square().mean().backward()
+                if loss is None:
+                    loss = error.square().mean() if training_loss is None else training_loss(error, labels)
+                loss.backward()
                 require(all(p.grad is not None and bool(torch.isfinite(p.grad).all())
                             for p in model.parameters() if p.requires_grad),
                         "INVALID_IMAGE_GRADIENT", "Missing or nonfinite image model gradients")
@@ -119,11 +137,12 @@ def run_epoch(model, loader, device, optimizer=None):
 
 
 def fit_epochs(package, fold, config, model, optimizer, folder, *, label, device,
-               transform=imagenet_input, augment=False, schedule=None, head_only_epochs=None):
+               transform=imagenet_input, augment=False, schedule=None, head_only_epochs=None,
+               training_loss=None, training_step=None):
     seed = config["seed"]
     train, validation = (
         DataLoader(FoldImages(package, fold[f"{role}_indices"], augment=augment and role == "train",
-                              transform=transform),
+                              transform=transform, weak_affine=config.get("train_affine") if role == "train" else None),
                    batch_size=config["batch_size"], shuffle=role == "train",
                    num_workers=config["num_workers"], worker_init_fn=seed_worker,
                    generator=torch.Generator().manual_seed(seed))
@@ -131,6 +150,7 @@ def fit_epochs(package, fold, config, model, optimizer, folder, *, label, device
     folder.mkdir()
     checkpoint = folder / "best.pt"
     history = []
+    early_stopping = config.get("early_stopping")
     best_epoch, best_rmse, stale = 0, math.inf, 0
     for epoch in range(1, config["max_epochs"] + 1):
         stage2 = head_only_epochs is not None and epoch > head_only_epochs
@@ -138,7 +158,8 @@ def fit_epochs(package, fold, config, model, optimizer, folder, *, label, device
             stale = 0
         if schedule is not None:
             schedule(model, epoch, head_only_epochs)
-        train_metrics, _, _ = run_epoch(model, train, device, optimizer)
+        train_metrics, _, _ = run_epoch(model, train, device, optimizer, training_loss=training_loss,
+                                        training_step=training_step)
         valid_metrics, _, _ = run_epoch(model, validation, device)
         if valid_metrics["rmse"] < best_rmse:
             best_epoch, best_rmse, stale = epoch, valid_metrics["rmse"], 0
@@ -149,6 +170,10 @@ def fit_epochs(package, fold, config, model, optimizer, folder, *, label, device
         print(f"{label} epoch={epoch}/{config['max_epochs']} train RMSE={train_metrics['rmse']:.6f} "
               f"validation RMSE={valid_metrics['rmse']:.6f} best_epoch={best_epoch}", flush=True)
         if stage2 and stale >= config["patience"]:
+            break
+        if (early_stopping is not None
+                and epoch - max(best_epoch, early_stopping["min_epochs"]) >= early_stopping["patience"]):
+            print(f"{label} early stop at epoch={epoch} best_epoch={best_epoch}", flush=True)
             break
     model.load_state_dict(torch.load(checkpoint, map_location="cpu", weights_only=True), strict=True)
     metrics, ids, scores = run_epoch(model, validation, device)
@@ -182,13 +207,14 @@ def validate_pretrained_state(state):
     return state
 
 
-def fit_frozen_head(package, fold, config, model, head, folder, *, label, device, transform=imagenet_input):
+def fit_frozen_head(package, fold, config, model, head, folder, *, label, device,
+                    transform=imagenet_input, training_loss=None, training_step=None):
     model.to(device).eval().requires_grad_(False)
     head.requires_grad_(True)
     optimizer = torch.optim.AdamW(head.parameters(), lr=config["head_lr"],
                                   weight_decay=config["weight_decay"], foreach=False, fused=False)
     return fit_epochs(package, fold, config, model, optimizer, folder, label=label, device=device,
-                      transform=transform)
+                      transform=transform, training_loss=training_loss, training_step=training_step)
 
 
 def image_runtime_versions(_config):
