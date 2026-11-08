@@ -17,13 +17,21 @@ from scripts.models.assessment.fusion import compare as compare_cli
 from src.common.manifest import write_json
 from src.common.paths import PipelineError, read_json
 from src.models.assessment.fusion.comparison import run_comparison
-from src.models.assessment.fusion.feature_fusion.assessment import run_assessment as assess_feature
+from src.models.assessment.fusion.feature_fusion.assessment import (
+    run_assessment as assess_feature,
+)
 from src.models.assessment.fusion.learned_late import assessment
-from src.models.assessment.fusion.weighted_late.assessment import run_assessment as assess_fixed
+from src.models.assessment.fusion.weighted_late.assessment import (
+    run_assessment as assess_fixed,
+)
 from src.models.experiments import experiment_store
 from src.models.train.fusion.learned_late import training
 from src.models.train.image.resnet50.training import BurdenHeadResNet, EventHead
-from tests.models.train.fusion.feature_fusion.test_training import ASSESSMENT_CONFIG, FusionFixture, TEMPLATE_ROOT
+from tests.models.train.fusion.feature_fusion.test_training import (
+    ASSESSMENT_CONFIG,
+    TEMPLATE_ROOT,
+    FusionFixture,
+)
 
 
 def tiny_event_model(_config, weights=None):

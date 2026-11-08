@@ -14,13 +14,29 @@ from src.common.paths import identifier, read_json, require
 from src.models.assessment.comparison import load_predictions
 from src.models.assessment.evaluation import training_source
 from src.models.ehr_data import checked_input_summary, load_package
-from src.models.experiments import completed_result, experiment_store, read_batch, run_model_batch
+from src.models.experiments import (
+    completed_result,
+    experiment_store,
+    read_batch,
+    run_model_batch,
+)
 from src.models.image_data import load_image_package
 from src.models.released_data import ReleasedData
 from src.models.train.ehr.catboost.protocol import validate_training_config
 from src.models.train.ehr.catboost.training import fit_fold
-from src.models.train.image.resnet50.training import IMAGENET, build_model, input_transform
-from src.models.train.image.training import MEAN, STD, FoldImages, configure_runtime, image_runtime_versions, seed_worker
+from src.models.train.image.resnet50.training import (
+    IMAGENET,
+    build_model,
+    input_transform,
+)
+from src.models.train.image.training import (
+    MEAN,
+    STD,
+    FoldImages,
+    configure_runtime,
+    image_runtime_versions,
+    seed_worker,
+)
 
 MODEL = "feature_fusion"
 VECTOR_DIM = 2048

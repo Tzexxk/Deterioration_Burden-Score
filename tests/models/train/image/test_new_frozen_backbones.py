@@ -11,7 +11,9 @@ from torchvision.models import efficientnet_b0
 from src.common.manifest import write_json
 from src.common.paths import read_json
 from src.models.assessment.image.caformer_s18 import assessment as caformer_assessment
-from src.models.assessment.image.efficientnet_b0 import assessment as efficientnet_assessment
+from src.models.assessment.image.efficientnet_b0 import (
+    assessment as efficientnet_assessment,
+)
 from src.models.train.image.caformer_s18 import training as caformer
 from src.models.train.image.convformer_s18 import training as convformer
 from src.models.train.image.deit_base_patch16_224 import training as deit

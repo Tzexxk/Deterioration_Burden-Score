@@ -7,7 +7,12 @@ from src.models.assessment.plots import plot_history
 from src.models.ehr_data import checked_input_summary, load_package
 from src.models.experiments import experiment_store, read_batch, run_model_batch
 from src.models.released_data import ReleasedData
-from src.models.train.fusion.feature_fusion.training import MODEL, load_fold_package, output, resolve_sources
+from src.models.train.fusion.feature_fusion.training import (
+    MODEL,
+    load_fold_package,
+    output,
+    resolve_sources,
+)
 
 
 def predict_fold(store, manifest, package, fold):

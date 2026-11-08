@@ -6,7 +6,12 @@ from threadpoolctl import threadpool_limits
 from src.common.manifest import write_json
 from src.common.paths import identifier, read_json, require
 from src.models.assessment.bootstrap import interval, patient_weights
-from src.models.assessment.comparison import BASELINE, RULES, calculate_comparison, write_comparison
+from src.models.assessment.comparison import (
+    BASELINE,
+    RULES,
+    calculate_comparison,
+    write_comparison,
+)
 from src.models.assessment.fusion.comparison import paired_errors
 from src.models.assessment.operating_points import fixed_alerts, measure_operating_point
 from src.models.ehr_data import load_package
@@ -15,7 +20,14 @@ from src.models.experiments import completed_result, experiment_store
 from src.models.released_data import ReleasedData
 from src.models.test.comparison import load_results
 from src.models.test.evaluation import output
-from src.models.test.fusion.workflow import BASE_MODELS, CANDIDATES, TEST_HISTORY, binding, checked_manifest, fusion_scores
+from src.models.test.fusion.workflow import (
+    BASE_MODELS,
+    CANDIDATES,
+    TEST_HISTORY,
+    binding,
+    checked_manifest,
+    fusion_scores,
+)
 
 
 def select_evaluations(layout, evaluation_ids):

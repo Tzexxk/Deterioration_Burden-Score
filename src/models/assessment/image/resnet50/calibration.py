@@ -9,7 +9,11 @@ import pandas as pd
 
 from src.common.manifest import write_json
 from src.common.paths import read_json, require
-from src.models.train.image.resnet50.training import fit_fold, load_weights, validate_settings
+from src.models.train.image.resnet50.training import (
+    fit_fold,
+    load_weights,
+    validate_settings,
+)
 
 
 def fit_affine(scores, labels):

@@ -11,7 +11,12 @@ from src.common.paths import PipelineError, read_json
 from src.models.assessment.fusion.learned_late.assessment import fit_coefficients
 from src.models.assessment.fusion.weighted_late.assessment import run_assessment
 from src.models.experiments import experiment_store
-from src.models.test.evaluation import SAMPLE_COLUMNS, frozen_thresholds, output, write_fixed_evaluation
+from src.models.test.evaluation import (
+    SAMPLE_COLUMNS,
+    frozen_thresholds,
+    output,
+    write_fixed_evaluation,
+)
 from src.models.test.fusion.comparison import run_comparison
 from src.models.test.fusion.workflow import CANDIDATES, binding, run_test
 from tests.models.train.fusion.feature_fusion.test_training import TEMPLATE_ROOT

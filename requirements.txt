@@ -1,8 +1,8 @@
 # Burden-Score data-processing and model runtime reference
 # Reference runtime: Python 3.11.16; dependency versions checked on 2026-11-05.
-# This is a direct-dependency reference, not a full conda environment lock.
-# CUDA-tagged wheels require a matching package source for a fresh installation;
-# clean-environment installation instructions will be validated separately.
+# These pins record the direct dependencies of the research environment.
+# A fresh installation needs a package source that supplies the recorded
+# CUDA builds of PyTorch and Torchvision.
 
 # Numerical computation, tables and evaluation
 numpy==2.4.6

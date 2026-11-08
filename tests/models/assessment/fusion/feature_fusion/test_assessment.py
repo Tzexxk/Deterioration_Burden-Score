@@ -11,7 +11,10 @@ from src.common.paths import read_json
 from src.models.assessment.fusion.feature_fusion.assessment import run_assessment
 from src.models.experiments import experiment_store
 from src.models.train.fusion.feature_fusion import training
-from tests.models.train.fusion.feature_fusion.test_training import ASSESSMENT_CONFIG, FusionFixture
+from tests.models.train.fusion.feature_fusion.test_training import (
+    ASSESSMENT_CONFIG,
+    FusionFixture,
+)
 
 
 class FeatureFusionAssessmentTests(unittest.TestCase):

@@ -11,7 +11,10 @@ import pandas as pd
 from src.common.manifest import write_json
 from src.common.paths import PipelineError, read_json
 from src.models.assessment.evaluation import metric_pair
-from src.models.assessment.fusion.weighted_late.assessment import paired_differences, run_assessment
+from src.models.assessment.fusion.weighted_late.assessment import (
+    paired_differences,
+    run_assessment,
+)
 from src.models.assessment.operating_points import operating_point
 from src.models.ehr_metrics import ENDPOINTS
 from src.models.experiments import experiment_store
@@ -203,7 +206,9 @@ class WeightedLateTests(unittest.TestCase):
             self.config["defaults"] = {**defaults, key: value}
             # Non-finite JSON is rejected at the writer boundary; test the validator directly.
             if key == "image_weight" and np.isnan(value):
-                from src.models.assessment.fusion.weighted_late.assessment import validate_parameters
+                from src.models.assessment.fusion.weighted_late.assessment import (
+                    validate_parameters,
+                )
                 with self.assertRaises(PipelineError):
                     validate_parameters(self.config["defaults"])
                 continue

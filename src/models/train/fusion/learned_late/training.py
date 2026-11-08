@@ -10,12 +10,17 @@ from src.common.manifest import write_json
 from src.common.paths import identifier, require
 from src.models.ehr_data import checked_input_summary, load_package
 from src.models.ehr_metrics import ENDPOINTS
-from src.models.experiments import completed_result, experiment_store, read_batch, run_model_batch
+from src.models.experiments import (
+    completed_result,
+    experiment_store,
+    read_batch,
+    run_model_batch,
+)
 from src.models.released_data import ReleasedData
 from src.models.test.ehr.catboost import model as ehr_model
 from src.models.test.image.resnet50 import model as image_model
 from src.models.train.ehr.catboost.training import fit_fold as calibrate_ehr
-from src.models.train.fusion.feature_fusion.training import output, resolve_sources
+from src.models.train.fusion.feature_fusion.training import resolve_sources
 
 MODEL = "learned_late"
 TRAINING_MEDIAN = "training_median"

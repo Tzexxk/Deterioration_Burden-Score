@@ -6,7 +6,14 @@ import pandas as pd
 from src.common.manifest import write_json
 from src.common.paths import identifier, read_json, require
 from src.models.assessment.bootstrap import interval, patient_weights
-from src.models.assessment.comparison import BASELINE, RULES, calculate_comparison, load_predictions, regression_metrics, write_comparison
+from src.models.assessment.comparison import (
+    BASELINE,
+    RULES,
+    calculate_comparison,
+    load_predictions,
+    regression_metrics,
+    write_comparison,
+)
 from src.models.assessment.evaluation import metric_pair
 from src.models.assessment.fusion.learned_late.assessment import fixed_name
 from src.models.assessment.operating_points import fixed_alerts

@@ -12,7 +12,12 @@ from src.models.assessment.evaluation import training_source, validate_parameter
 from src.models.experiments import completed_result, experiment_store
 from src.models.image_data import load_image_package
 from src.models.released_data import ReleasedData
-from src.models.test.evaluation import SAMPLE_COLUMNS, frozen_thresholds, output, write_fixed_evaluation
+from src.models.test.evaluation import (
+    SAMPLE_COLUMNS,
+    frozen_thresholds,
+    output,
+    write_fixed_evaluation,
+)
 from src.models.test.image.resnet50 import model as adapter
 from src.models.train.image.resnet50.training import MODEL
 from src.models.train.image.training import image_runtime_versions

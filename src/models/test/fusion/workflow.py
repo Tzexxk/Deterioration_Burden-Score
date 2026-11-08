@@ -16,7 +16,12 @@ from src.models.ehr_metrics import ENDPOINTS
 from src.models.experiments import completed_result, experiment_store
 from src.models.released_data import ReleasedData
 from src.models.test.comparison import load_results
-from src.models.test.evaluation import POINT_FIELDS, frozen_thresholds, output, write_fixed_evaluation
+from src.models.test.evaluation import (
+    POINT_FIELDS,
+    frozen_thresholds,
+    output,
+    write_fixed_evaluation,
+)
 
 CANDIDATES = {"weighted_late": "f1", "learned_late": "f3b"}
 BASE_MODELS = {"ehr": "catboost", "image": "resnet50"}

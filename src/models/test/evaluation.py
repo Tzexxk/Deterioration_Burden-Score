@@ -5,7 +5,11 @@ import numpy as np
 from src.common.manifest import write_json
 from src.models.assessment.comparison import BASELINE, RULES
 from src.models.assessment.evaluation import metric_pair
-from src.models.assessment.operating_points import measure_operating_point, operating_point, rule_folder
+from src.models.assessment.operating_points import (
+    measure_operating_point,
+    operating_point,
+    rule_folder,
+)
 from src.models.assessment.plots import confusion_plot
 from src.models.ehr_metrics import ENDPOINTS
 

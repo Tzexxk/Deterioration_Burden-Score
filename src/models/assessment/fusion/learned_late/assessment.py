@@ -14,14 +14,29 @@ from src.models.assessment.operating_points import operating_point, rule_folder
 from src.models.assessment.plots import confusion_plot
 from src.models.ehr_data import checked_input_summary, load_package
 from src.models.ehr_metrics import ENDPOINTS
-from src.models.experiments import completed_result, experiment_store, read_batch, run_model_batch
+from src.models.experiments import (
+    completed_result,
+    experiment_store,
+    read_batch,
+    run_model_batch,
+)
 from src.models.released_data import ReleasedData
 from src.models.test.ehr.catboost import model as ehr_model
 from src.models.train.fusion.feature_fusion.training import output, resolve_sources
 from src.models.train.fusion.learned_late.training import (
-    IDENTITY, MODEL, TRAINING_MEDIAN, bindings, calibration_fold, fit_id, median_lengths, partitions, split_rows,
+    IDENTITY,
+    MODEL,
+    TRAINING_MEDIAN,
+    bindings,
+    calibration_fold,
+    fit_id,
+    median_lengths,
+    partitions,
+    split_rows,
 )
-from src.models.train.fusion.learned_late.training import validate_parameters as validate_training_parameters
+from src.models.train.fusion.learned_late.training import (
+    validate_parameters as validate_training_parameters,
+)
 
 
 def fit_coefficients(ehr, image, labels):

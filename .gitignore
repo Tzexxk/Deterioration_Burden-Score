@@ -4,14 +4,9 @@
 !/configs/*.template/
 !/configs/*.template.json
 
-# Local migration workspace: remove after migration is accepted.
-/MIGRATION_PLAN.local.md
-/MIGRATION_STATUS.md
-/environment.baseline.json
-/.migration/
+# Local data and generated artifacts.
 /data/
 /outputs/
-/local_inputs/
 .env
 .env.*
 !.env.example
@@ -29,6 +24,7 @@
 *.zip
 *.pt
 *.pth
+*.safetensors
 *.ckpt
 *.cbm
 *.joblib
@@ -39,12 +35,5 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-# Local image research plan.
-/IMAGE_RESEARCH_PLAN.local.md
-
-# Local image modality report.
-/IMAGE_SINGLE_MODAL_REPORT.local.docx
-
-# Local research reports.
-/EHR_Unimodal_Report.docx
-/DATA_PROCESSING_REPORT.local.docx
+# Local research report.
+/Report.pdf
